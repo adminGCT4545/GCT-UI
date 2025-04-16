@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GCT Enterprise App Concept</title>
+    <!-- Remove or add actual CSS file -->
+    <style>
+        /* Add basic styles here if no external CSS */
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+             <button class="sidebar-button" id="newChatBtn" title="New Chat"><span>+</span> <span class="sidebar-item-text">New Chat</span></button>
+             <button class="sidebar-button" id="collapseToggleBtn" title="Collapse Menu"><span>&lt;</span></button>
+        </div>
+        <div id="conversationList"></div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Workflows</div>
+            <button class="sidebar-button" id="approvalQueueBtn" title="Approval Queue"><span>&#128204;</span> <span class="sidebar-item-text">Approvals <span class="badge">3</span></span></button>
+             <button class="sidebar-button" id="batchProcessingToggleBtn" title="Batch Processing"><span>&#128230;</span> <span class="sidebar-item-text">Batch Jobs</span></button>
+        </div>
+         <div class="sidebar-section">
+             <div class="sidebar-section-title">Knowledge</div>
+             <button class="sidebar-button" id="docLibraryBtn" title="Document Library"><span>&#128193;</span> <span class="sidebar-item-text">Doc Library</span></button>
+         </div>
+        <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); width: 100%;">
+             <button class="sidebar-button" id="settingsBtn" title="Settings"><span>&#9881;</span> <span class="sidebar-item-text">Settings</span></button>
+        </div>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-content-wrapper">
+        <div class="main-content" id="mainContent">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <div class="app-info">
+                        <h1 class="app-title">GCT Enterprise App Concept</h1>
+                        <p class="app-subtitle">Enterprise Analysis Platform</p>
+                    </div>
+                    <h2 id="conversationTitle" title="Click to rename">Analysis Session</h2>
+                    <input type="text" id="conversationTitleInput" placeholder="Enter new title..." />
+                </div>
+                <div class="header-right">
+                    <button id="viewModeToggle" title="Toggle Dashboard View">Dashboard View</button>
+                    <button id="notificationsBtn" title="Notifications">
+                        <span>&#128276;</span>
+                        <span id="notification-badge">0</span>
+                    </button>
+                    <div id="userProfilePlaceholder"></div>
+                </div>
+            </header>
+
+            <!-- Chat Container -->
+            <main class="chat-container" id="chatContainer"></main>
+
+            <!-- Input Container -->
+            <div class="input-container" id="inputContainer">
+                <div class="input-wrapper">
+                    <div class="templates-popup" id="templatesPopup"></div>
+                    <form class="input-form" id="chatForm">
+                        <div class="input-actions">
+                            <button type="button" class="input-action-button" id="templateBtn" title="Prompt Templates"><span>&#128220;</span></button>
+                            <button type="button" class="input-action-button" id="uploadFileBtn" title="Upload File"><span>&#128206;</span></button>
+                            <!-- Notepad Toggle Button -->
+                            <button type="button" class="input-action-button" id="notepadToggleBtn" title="Toggle Notepad"><span>&#128221;</span></button>
+                            <input type="file" id="fileInput" accept="image/*,application/pdf,.txt,.csv,.json,.md,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/dicom,.dcm">
+                        </div>
+                        <textarea class="message-input" id="messageInput" placeholder="Ask about the document or use /note ..." rows="1"></textarea>
+                        <button type="submit" class="send-button" id="sendButton" disabled>Send</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Multimodal Analysis Dashboard -->
+            <div class="analysis-dashboard" id="analysisDashboard">
+                <!-- Dashboard content -->
+                <div class="dashboard-section">
+                    <h3 class="dashboard-section-title">Document Viewer</h3>
+                    <div id="documentViewerPlaceholder">
+                        <div id="annotationToolbar">
+                            <button class="tool-btn" title="Select"> S </button>
+                            <button class="tool-btn" title="Draw">✏️</button>
+                            <button class="tool-btn" title="Highlight"> H </button>
+                            <button class="tool-btn" title="Text"> T </button>
+                            <button class="tool-btn" title="Comment">💬</button>
+                        </div>
+                        <span>Document Preview Area</span>
+                    </div>
+                </div>
+                 <div class="dashboard-section">
+                     <h3 class="dashboard-section-title">Detected Entities & Analysis</h3>
+                     <div id="entityHighlightPlaceholder">
+                         <p>Measurements: <span style="background-color: rgba(255, 165, 0, 0.3); padding: 2px 4px; border-radius: 3px;">15.2mm</span> <span class="confidence-score">(98%)</span></p>
+                         <p class="placeholder-text">Detected items will be listed here...</p>
+                     </div>
+                 </div>
+                 <div class="dashboard-section">
+                     <h3 class="dashboard-section-title">Advanced Analytics</h3>
+                     <div id="timeSeriesChartPlaceholder">Time-Series Visualization</div>
+                     <div id="anomalyVizPlaceholder">Anomaly Detection Visualization</div>
+                     <div id="predictiveVizPlaceholder">Predictive Modeling Visualization</div>
+                     <button class="settings-button" style="margin-top: 1rem; width: auto;">Compare with History</button>
+                 </div>
+            </div>
+        </div>
+
+        <!-- Right Panel (Artifacts / Details) -->
+        <div class="right-panel" id="rightPanel">
+            <h3 style="color: var(--text-muted); text-align: center; margin-bottom: 1rem;">Details & Artifacts</h3>
+            <div class="artifact">
+                <div class="artifact-header"><span class="artifact-title">Extracted Table</span><span class="artifact-type">CSV</span></div>
+                <div class="artifact-content"><pre><code>ID,Value,Unit\n1,15.2,mm\n2,10.0,cm</code></pre></div>
+            </div>
+             <div class="settings-section" style="margin-top: 2rem;">
+                 <h3 class="settings-section-title">Collaboration</h3>
+                 <div class="placeholder-text">Comments and annotations appear here.</div>
+                 <button class="settings-button primary">Share Findings</button>
+                 <button class="settings-button">Export Report (PDF)</button>
+             </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+         <div class="settings-header">
+             <h2 class="settings-title">Settings & Configuration</h2>
+             <button class="close-settings" id="closeSettings">&times;</button>
+         </div>
+         <div class="settings-tabs">
+             <button class="settings-tab active" data-tab="general">General</button>
+             <button class="settings-tab" data-tab="model">Model</button>
+             <button class="settings-tab" data-tab="security">Security</button>
+             <button class="settings-tab" data-tab="workflows">Workflows</button>
+             <button class="settings-tab" data-tab="integrations">Integrations</button>
+             <button class="settings-tab" data-tab="knowledge">Knowledge</button>
+         </div>
+         <div class="settings-content-wrapper">
+             <!-- General Settings Tab -->
+             <div class="settings-content active" id="settings-tab-general">
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Conversation</h3>
+                     <button id="viewEditHistoryBtn" class="settings-button">View / Edit History</button>
+                     <button id="clearCurrentHistoryBtn" class="settings-button danger">Clear Current Session History</button>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Response Style</h3>
+                     <div class="settings-option"><input type="radio" id="professionalStyle" name="responseStyle" value="professional"><label for="professionalStyle">Professional</label></div>
+                     <div class="settings-option"><input type="radio" id="conciseStyle" name="responseStyle" value="concise"><label for="conciseStyle">Concise</label></div>
+                     <div class="settings-option"><input type="radio" id="normalStyle" name="responseStyle" value="normal" checked><label for="normalStyle">Normal</label></div>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Advanced Modes</h3>
+                     <div class="settings-option"><input type="checkbox" id="thinkingModeToggle"><label for="thinkingModeToggle">Enable Extended Reasoning</label></div>
+                     <div class="settings-option"><input type="checkbox" id="webSearchToggle"><label for="webSearchToggle">Enable Web Search</label></div>
+                 </div>
+             </div>
+             <!-- Model Settings Tab -->
+             <div class="settings-content" id="settings-tab-model">
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Model Selection</h3>
+                     <div class="settings-option">
+                         <select id="modelSelector">
+                             <option value="llama3:8b">Llama 3 8B (Default)</option>
+                             <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                             <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                             <option value="domain-specific-med-v1">Domain: Medical v1</option>
+                             <option value="domain-specific-eng-v2">Domain: Engineering v2</option>
+                         </select>
+                     </div>
+                     <div id="activeModelDisplay" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Current: llama3:8b</div>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Creativity (Temperature)</h3>
+                     <div class="slider-container">
+                         <input type="range" id="temperatureSlider" min="0" max="1.5" step="0.1" value="0.7">
+                         <span id="temperatureValue">0.7</span>
+                     </div>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Model Management</h3>
+                     <button class="settings-button">Manage Model Versions</button>
+                     <button class="settings-button">Start Fine-tuning Job</button>
+                     <button class="settings-button">View Performance Metrics</button>
+                     <button class="settings-button">Configure A/B Test</button>
+                     <div id="modelPerfDashboard" class="placeholder-text" style="margin-top: 1rem;">Model Performance Dashboard Area</div>
+                 </div>
+             </div>
+             <!-- Security Settings Tab -->
+             <div class="settings-content" id="settings-tab-security">
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Compliance</h3>
+                     <div class="compliance-logos">
+                         <span class="tooltip"><img src="placeholder-soc2.png" alt="SOC 2"><span class="tooltiptext">SOC 2 Compliant</span></span>
+                         <span class="tooltip"><img src="placeholder-hipaa.png" alt="HIPAA"><span class="tooltiptext">HIPAA Compliant</span></span>
+                         <span class="tooltip"><img src="placeholder-gdpr.png" alt="GDPR"><span class="tooltiptext">GDPR Compliant</span></span>
+                     </div>
+                     <div class="settings-option" style="margin-top: 1rem;">
+                         <label for="dataResidency" style="margin-left: 0; margin-right: 0.5rem; flex-shrink: 0;">Data Residency:</label>
+                         <select id="dataResidency">
+                             <option value="us">United States</option>
+                             <option value="eu">European Union</option>
+                             <option value="global">Global Default</option>
+                         </select>
+                     </div>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Access Control</h3>
+                     <button class="settings-button">Manage Users & Roles (RBAC)</button>
+                     <button class="settings-button">Manage Document Permissions</button>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Auditing</h3>
+                     <button class="settings-button">View Audit Logs</button>
+                 </div>
+             </div>
+             <!-- Workflows Tab -->
+             <div class="settings-content" id="settings-tab-workflows">
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Workflow Management</h3>
+                     <button class="settings-button">Create / Edit Workflows</button>
+                     <div class="placeholder-text" style="margin-top: 1rem;">Workflow Editor Area</div>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Approval Settings</h3>
+                     <button class="settings-button">Configure Approval Queues</button>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Domain Specific Enhancements</h3>
+                      <div class="settings-option"><input type="checkbox" id="medTermToggle"><label for="medTermToggle">Enable Medical Terminology Validation</label></div>
+                      <div class="settings-option"><input type="checkbox" id="equipSpecToggle"><label for="equipSpecToggle">Enable Equipment-Specific Analysis</label></div>
+                 </div>
+             </div>
+              <!-- Integrations Tab -->
+             <div class="settings-content" id="settings-tab-integrations">
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">EHR / EMR Systems</h3>
+                     <button class="settings-button primary">Connect to EHR/EMR</button>
+                     <div class="placeholder-text">List of connected systems...</div>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Enterprise Systems</h3>
+                     <button class="settings-button">Connect to SAP</button>
+                     <button class="settings-button">Connect to Salesforce</button>
+                     <div class="placeholder-text">List of connected systems...</div>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">API Access</h3>
+                     <button class="settings-button">Manage API Keys</button>
+                 </div>
+             </div>
+              <!-- Knowledge Base Tab -->
+             <div class="settings-content" id="settings-tab-knowledge">
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Knowledge Base Connection</h3>
+                     <div class="settings-option">
+                         <label for="kbEndpoint" style="margin-left:0; margin-right: 0.5rem;">Endpoint:</label>
+                         <input type="text" id="kbEndpoint" placeholder="Enter KB API endpoint...">
+                     </div>
+                      <div class="settings-option"><input type="checkbox" id="ragToggle"><label for="ragToggle">Enable Retrieval-Augmented Generation (RAG)</label></div>
+                     <button class="settings-button primary" style="margin-top: 1rem;">Connect</button>
+                 </div>
+                 <div class="settings-section">
+                     <h3 class="settings-section-title">Document Library Settings</h3>
+                     <button class="settings-button">Configure Semantic Search</button>
+                 </div>
+             </div>
+         </div>
+    </div>
+
+    <!-- File Upload Modal -->
+    <div class="file-upload-modal" id="fileUploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Upload & Process File</h2>
+                <button class="close-modal" id="closeFileUploadModal">&times;</button>
+            </div>
+            <div class="file-upload-area" id="dropArea">
+                <p class="file-upload-text">Drag & drop file or click to browse (PDF, DOCX, XLSX, DICOM, Images, Text...)</p>
+                <img src="" alt="Image Preview" class="file-preview" id="imagePreview">
+                <div class="file-info" id="fileInfoPreview">
+                    <span style="font-size: 2rem;">📄</span>
+                    <span id="fileNamePreview"></span> (<span id="fileSizePreview"></span>)
+                </div>
+            </div>
+            <div class="upload-options">
+                <h4>Processing Options</h4>
+                <div class="settings-option"><input type="checkbox" id="enableOcr" checked><label for="enableOcr">Enable OCR</label></div>
+                <div class="settings-option"><input type="checkbox" id="extractTables" checked><label for="extractTables">Extract Tables</label></div>
+                <div class="settings-option"><input type="checkbox" id="segmentDoc"><label for="segmentDoc">Segment Document Sections</label></div>
+                <div class="settings-option">
+                     <label for="workflowSelect" style="margin-left:0; margin-right: 0.5rem;">Apply Workflow:</label>
+                     <select id="workflowSelect">
+                         <option value="default">Default Analysis</option>
+                         <option value="medical_report">Medical Report Review</option>
+                         <option value="engineering_spec">Engineering Spec Check</option>
+                         <option value="financial_audit">Financial Audit Assist</option>
+                     </select>
+                 </div>
+            </div>
+            <div class="file-upload-buttons">
+                <button class="cancel-button" id="cancelUpload">Cancel</button>
+                <button class="upload-button" id="confirmUpload" disabled>Upload & Analyze</button>
+            </div>
+        </div>
+    </div>
+
+     <!-- History Edit Modal -->
+     <div class="file-upload-modal" id="historyEditModal" style="align-items: flex-start; padding-top: 5vh;">
+         <div class="modal-content" style="max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;">
+             <div class="modal-header">
+                 <h2 class="modal-title">Edit Conversation History</h2>
+                 <button class="close-modal" id="closeHistoryModal">&times;</button>
+             </div>
+             <div id="historyEditContent" style="flex-grow: 1; overflow-y: auto; border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; background: var(--bg-primary);"></div>
+             <div style="margin-top: 1rem; text-align: right;">
+                 <button class="cancel-button" id="cancelHistoryEdit">Close</button>
+             </div>
+         </div>
+     </div>
+
+     <!-- Batch Processing Panel -->
+     <div class="batch-processing-panel" id="batchProcessingPanel">
+         <div class="batch-panel-header">
+             <h3 class="batch-panel-title">Batch Processing Queue</h3>
+             <div class="batch-panel-actions">
+                 <button class="settings-button primary" id="startNewBatchBtn">Start New Batch</button>
+                 <button class="settings-button" id="closeBatchPanelBtn">&times;</button>
+             </div>
+         </div>
+         <div class="batch-queue-list" id="batchQueueList">
+             <div class="placeholder-text">No active batch jobs.</div>
+         </div>
+     </div>
+
+    <!-- Notepad Container -->
+    <div class="notepad-container" id="notepadContainer">
+        <div class="notepad-header">
+            <h3 class="notepad-title">Notepad</h3>
+            <div class="notepad-actions">
+                <button class="notepad-action" id="notepadClearBtn" title="Clear notepad"><span>&#128465;</span></button>
+                <button class="notepad-action" id="notepadCollapseBtn" title="Hide notepad"><span>&#10006;</span></button>
+            </div>
+        </div>
+        <div class="notepad-content" id="notepadContent" contenteditable="true" spellcheck="true"></div>
+        <div class="notepad-footer">
+            <div class="notepad-status" id="notepadStatus">Ready</div>
+            <div class="notepad-buttons">
+                <button class="notepad-footer-btn" id="notepadSaveBtn">Save</button>
+                <button class="notepad-footer-btn" id="notepadAskLLMBtn">Ask AI to edit</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Initialize variables
+        let currentViewMode = 'chat';
+        let notificationBadge;
+
+        function initializeNotepad() {
+            notepadContent.innerHTML = localStorage.getItem('notepad') || '';
+            updateNotepadStatus('Ready');
+        }
+
+        // --- DOM Elements ---
+        const sidebar = document.getElementById('sidebar');
+        const collapseToggleBtn = document.getElementById('collapseToggleBtn');
+        const approvalQueueBtn = document.getElementById('approvalQueueBtn');
+        const batchProcessingToggleBtn = document.getElementById('batchProcessingToggleBtn');
+        const docLibraryBtn = document.getElementById('docLibraryBtn');
+        const mainContent = document.getElementById('mainContent');
+        const chatContainer = document.getElementById('chatContainer');
+        const inputContainer = document.getElementById('inputContainer');
+        const analysisDashboard = document.getElementById('analysisDashboard');
+        const viewModeToggle = document.getElementById('viewModeToggle');
+        const notificationsBtn = document.getElementById('notificationsBtn');
+        const notificationBadge = document.getElementById('notification-badge');
+        const rightPanel = document.getElementById('rightPanel');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const settingsTabs = document.querySelectorAll('.settings-tab');
+        const settingsContents = document.querySelectorAll('.settings-content');
+        const closeSettings = document.getElementById('closeSettings');
+        const fileUploadModal = document.getElementById('fileUploadModal');
+        const enableOcr = document.getElementById('enableOcr');
+        const extractTables = document.getElementById('extractTables');
+        const segmentDoc = document.getElementById('segmentDoc');
+        const workflowSelect = document.getElementById('workflowSelect');
+        const batchProcessingPanel = document.getElementById('batchProcessingPanel');
+        const batchQueueList = document.getElementById('batchQueueList');
+        const startNewBatchBtn = document.getElementById('startNewBatchBtn');
+        const closeBatchPanelBtn = document.getElementById('closeBatchPanelBtn');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const uploadFileBtn = document.getElementById('uploadFileBtn');
+        const closeFileUploadModal = document.getElementById('closeFileUploadModal');
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const fileInfoPreview = document.getElementById('fileInfoPreview');
+        const fileNamePreview = document.getElementById('fileNamePreview');
+        const fileSizePreview = document.getElementById('fileSizePreview');
+        const confirmUpload = document.getElementById('confirmUpload');
+        const cancelUpload = document.getElementById('cancelUpload');
+        const clearCurrentHistoryBtn = document.getElementById('clearCurrentHistoryBtn');
+        const viewEditHistoryBtn = document.getElementById('viewEditHistoryBtn');
+        const historyEditModal = document.getElementById('historyEditModal');
+        const closeHistoryModal = document.getElementById('closeHistoryModal');
+        const cancelHistoryEdit = document.getElementById('cancelHistoryEdit');
+        const historyEditContent = document.getElementById('historyEditContent');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const responseStyleOptions = document.querySelectorAll('input[name="responseStyle"]');
+        const conversationList = document.getElementById('conversationList');
+        const conversationTitle = document.getElementById('conversationTitle');
+        const conversationTitleInput = document.getElementById('conversationTitleInput');
+        const modelSelector = document.getElementById('modelSelector');
+        const activeModelDisplay = document.getElementById('activeModelDisplay');
+        const temperatureSlider = document.getElementById('temperatureSlider');
+        const temperatureValue = document.getElementById('temperatureValue');
+        const thinkingModeToggle = document.getElementById('thinkingModeToggle');
+        const webSearchToggle = document.getElementById('webSearchToggle');
+        const templateBtn = document.getElementById('templateBtn');
+        const templatesPopup = document.getElementById('templatesPopup');
+        const dataResidency = document.getElementById('dataResidency');
+        const medTermToggle = document.getElementById('medTermToggle');
+        const equipSpecToggle = document.getElementById('equipSpecToggle');
+        const ragToggle = document.getElementById('ragToggle');
+        const kbEndpoint = document.getElementById('kbEndpoint');
+        // Notepad DOM Elements
+        const notepadContainer = document.getElementById('notepadContainer');
+        const notepadContent = document.getElementById('notepadContent');
+        const notepadToggleBtn = document.getElementById('notepadToggleBtn');
+        const notepadCollapseBtn = document.getElementById('notepadCollapseBtn');
+        const notepadClearBtn = document.getElementById('notepadClearBtn');
+        const notepadStatus = document.getElementById('notepadStatus');
+        const notepadSaveBtn = document.getElementById('notepadSaveBtn');
+        const notepadAskLLMBtn = document.getElementById('notepadAskLLMBtn');
+
+
+        // --- Global State ---
+        let isBatchPanelVisible = false;
+        let conversations = {};
+        let currentConversationId = null;
+        let selectedFile = null;
+        let currentResponseStyle = 'normal';
+        let currentTemperature = 0.7;
+        let isThinkingModeEnabled = false;
+        let isWebSearchEnabled = false;
+        let selectedModel = 'llama3:8b';
+        let isWaitingForResponse = false;
+        let currentStreamingMessageElement = null;
+        let currentAbortController = null;
+        let currentDataResidency = 'us';
+        let isMedTermEnabled = false;
+        let isEquipSpecEnabled = false;
+        let isRagEnabled = false;
+        let currentKbEndpoint = '';
+        let currentUploadOptions = { ocr: true, tables: true, segment: false, workflow: 'default' };
+
+
+        // --- API Configuration ---
+        const API_ENDPOINT = '/api/chat';
+        const BATCH_API_ENDPOINT = '/api/batch';
+        const WORKFLOW_API_ENDPOINT = '/api/workflows';
+
+        // --- Helper Functions ---
+        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2); }
+        function formatBytes(bytes, decimals = 2) { if (bytes === 0) return '0 Bytes'; const k = 1024; const dm = decimals < 0 ? 0 : decimals; const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']; const i = Math.floor(Math.log(bytes) / Math.log(k)); return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]; }
+        function getFileIcon(mimeType) { if (mimeType.startsWith('image/')) return '🖼️'; if (mimeType.includes('pdf')) return '📄'; if (mimeType.includes('word')) return '📝'; if (mimeType.includes('sheet') || mimeType.includes('excel')) return '📊'; if (mimeType.startsWith('text/')) return '📜'; if (mimeType.includes('dicom')) return '⚕️'; return '📎'; }
+        function addMessage(text, role, options = {}) {
+            const { isHtml = false, messageId = generateId(), citations = null, confidence = null } = options;
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', `${role}-message`);
+            messageDiv.dataset.messageId = messageId;
+
+            let contentHtml = '';
+            if (isHtml) { contentHtml = text; }
+            else {
+                const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+                contentHtml = text.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+                contentHtml = contentHtml.replace(/\n/g, '<br>');
+            }
+
+            if (role === 'assistant') { contentHtml = marked.parse(contentHtml); }
+            messageDiv.innerHTML = contentHtml;
+
+            if (citations && citations.length > 0) {
+                const citationList = document.createElement('div');
+                citationList.className = 'citation-source-list';
+                let listHtml = '<h4>Sources:</h4><ul>';
+                citations.forEach((cite, index) => {
+                    const citeNum = index + 1;
+                    const placeholder = `[${citeNum}]`;
+                    const regex = new RegExp(`\\\[${citeNum}\\\](?![\w-])`, 'g');
+                    messageDiv.innerHTML = messageDiv.innerHTML.replace(regex, `<span class="citation" title="${cite.title || cite.url}" data-url="${cite.url}">[${citeNum}]</span>`);
+                    listHtml += `<li>[${citeNum}] <a href="${cite.url}" target="_blank" rel="noopener noreferrer">${cite.title || cite.url}</a></li>`;
+                });
+                listHtml += '</ul>'; citationList.innerHTML = listHtml; messageDiv.appendChild(citationList);
+            }
+
+            if (role === 'assistant' && confidence !== null) {
+                 const confidenceSpan = document.createElement('span');
+                 confidenceSpan.className = 'confidence-score';
+                 confidenceSpan.textContent = `(${(confidence * 100).toFixed(0)}%)`;
+                 // Find first text node to append to, or just append at end
+                 let inserted = false;
+                 for(let node of messageDiv.childNodes) {
+                     if(node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
+                         node.parentNode.insertBefore(confidenceSpan, node.nextSibling);
+                         inserted = true;
+                         break;
+                     }
+                 }
+                 if (!inserted) messageDiv.appendChild(confidenceSpan);
+            }
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-message-btn'; deleteBtn.innerHTML = '&times;'; deleteBtn.title = 'Delete message';
+            deleteBtn.onclick = () => deleteMessageHandler(messageId); messageDiv.appendChild(deleteBtn);
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'message-actions';
+            actionsDiv.innerHTML = `<button class="message-action-btn" title="Add Comment">💬</button><button class="message-action-btn" title="Send to Approval">✔️</button><button class="message-action-btn" title="Copy">📋</button>`;
+            messageDiv.appendChild(actionsDiv);
+
+            chatContainer.appendChild(messageDiv);
+
+            if (role === 'assistant') {
+                messageDiv.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                    const pre = block.parentElement;
+                    if (pre && pre.tagName === 'PRE') {
+                        const copyBtn = document.createElement('button'); copyBtn.className = 'copy-code-btn'; copyBtn.textContent = 'Copy';
+                        copyBtn.onclick = () => copyCodeHandler(block, copyBtn); pre.appendChild(copyBtn);
+                    }
+                });
+            }
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+            return messageDiv;
+        }
+        function copyCodeHandler(block, button) { navigator.clipboard.writeText(block.textContent).then(() => { button.textContent = 'Copied!'; button.classList.add('copied'); setTimeout(() => { button.textContent = 'Copy'; button.classList.remove('copied'); }, 2000); }).catch(err => { console.error('Failed to copy code: ', err); button.textContent = 'Error'; setTimeout(() => { button.textContent = 'Copy'; }, 2000); }); }
+        function addFilePlaceholderMessage(fileInfo) {
+            const messageDiv = document.createElement('div'); messageDiv.classList.add('message', 'user-message'); messageDiv.dataset.messageId = generateId();
+            let fileHtml = ''; const icon = getFileIcon(fileInfo.type);
+            if (fileInfo.type.startsWith('image/')) { fileHtml = `<img src="${fileInfo.base64}" alt="${fileInfo.name}" style="max-width: 200px; max-height: 150px; border-radius: 0.5rem; margin-top: 0.5rem; display: block;">`; }
+            else { fileHtml = `<div class="file-placeholder"><span>${icon}</span><span>${fileInfo.name} (${formatBytes(fileInfo.size)})</span></div>`; }
+            messageDiv.innerHTML = `File ready: ${fileHtml}`;
+            const deleteBtn = document.createElement('button'); deleteBtn.className = 'delete-message-btn'; deleteBtn.innerHTML = '&times;'; deleteBtn.title = 'Remove file attachment';
+            deleteBtn.onclick = () => { selectedFile = null; messageDiv.remove(); updateButtonStates(); }; messageDiv.appendChild(deleteBtn);
+            chatContainer.appendChild(messageDiv); chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+        function removeStreamingIndicator() { if (currentStreamingMessageElement) { currentStreamingMessageElement.classList.remove('streaming'); currentStreamingMessageElement.querySelectorAll('pre code:not(.hljs)').forEach((block) => { hljs.highlightElement(block); const pre = block.parentElement; if (pre && pre.tagName === 'PRE' && !pre.querySelector('.copy-code-btn')) { const copyBtn = document.createElement('button'); copyBtn.className = 'copy-code-btn'; copyBtn.textContent = 'Copy'; copyBtn.onclick = () => copyCodeHandler(block, copyBtn); pre.appendChild(copyBtn); } }); currentStreamingMessageElement = null; } const typingIndicator = chatContainer.querySelector('.typing-indicator'); if (typingIndicator) typingIndicator.remove(); }
+        function resetFileUpload() { fileInput.value = ''; imagePreview.src = ''; imagePreview.style.display = 'none'; fileInfoPreview.style.display = 'none'; fileNamePreview.textContent = ''; fileSizePreview.textContent = ''; selectedFile = null; confirmUpload.disabled = true; dropArea.classList.remove('dragover'); enableOcr.checked = true; extractTables.checked = true; segmentDoc.checked = false; workflowSelect.value = 'default'; }
+        function handleFiles(files) { if (files.length > 0) { const file = files[0]; const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; selectedFile = { name: file.name, type: file.type, size: file.size, base64: base64Data }; if (file.type.startsWith('image/')) { imagePreview.src = base64Data; imagePreview.style.display = 'block'; fileInfoPreview.style.display = 'none'; } else { imagePreview.style.display = 'none'; fileNamePreview.textContent = file.name; fileSizePreview.textContent = formatBytes(file.size); fileInfoPreview.style.display = 'block'; } confirmUpload.disabled = false; }; reader.onerror = function(e) { console.error("File reading error:", e); alert("Error reading file."); resetFileUpload(); }; reader.readAsDataURL(file); } }
+        function updateButtonStates() { const messageText = messageInput.value.trim(); sendButton.disabled = (messageText.length === 0 && !selectedFile) || isWaitingForResponse; }
+        function autoResizeTextarea() { messageInput.style.height = 'auto'; let scrollHeight = messageInput.scrollHeight; const maxHeight = parseInt(window.getComputedStyle(messageInput).maxHeight, 10); if (scrollHeight > maxHeight) { messageInput.style.height = maxHeight + 'px'; messageInput.style.overflowY = 'auto'; } else { messageInput.style.height = scrollHeight + 'px'; messageInput.style.overflowY = 'hidden'; } updateButtonStates(); }
+        function loadConversations() { const storedConvs = localStorage.getItem('kynseyAiConversations'); if (storedConvs) { conversations = JSON.parse(storedConvs); } else { conversations = {}; } const lastConvId = localStorage.getItem('kynseyAiLastConversationId'); if (lastConvId && conversations[lastConvId]) { currentConversationId = lastConvId; } else if (Object.keys(conversations).length > 0) { currentConversationId = Object.keys(conversations)[0]; } else { createNewConversation(); } renderConversationList(); loadConversation(currentConversationId); }
+        function saveConversations() { localStorage.setItem('kynseyAiConversations', JSON.stringify(conversations)); localStorage.setItem('kynseyAiLastConversationId', currentConversationId); }
+        function createNewConversation(setActive = true) { const newId = generateId(); const timestamp = new Date(); const defaultName = `Analysis ${timestamp.toLocaleDateString()} ${timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`; conversations[newId] = { id: newId, name: defaultName, history: [], model: selectedModel, temperature: currentTemperature, thinkingMode: isThinkingModeEnabled, webSearch: isWebSearchEnabled, responseStyle: currentResponseStyle, dataResidency: currentDataResidency, medTermEnabled: isMedTermEnabled, equipSpecEnabled: isEquipSpecEnabled, ragEnabled: isRagEnabled, kbEndpoint: currentKbEndpoint, createdAt: timestamp.toISOString(), associatedDocument: null, notepadContent: '' /* Initialize notepad content */ }; if (setActive) { currentConversationId = newId; loadConversation(newId); renderConversationList(); saveConversations(); } return newId; }
+        function loadConversation(id) { if (!conversations[id]) { console.error("Conversation not found:", id); if (Object.keys(conversations).length > 0) { loadConversation(Object.keys(conversations)[0]); } else { createNewConversation(); } return; } currentConversationId = id; const conv = conversations[id]; selectedModel = conv.model || 'llama3:8b'; currentTemperature = conv.temperature || 0.7; isThinkingModeEnabled = conv.thinkingMode || false; isWebSearchEnabled = conv.webSearch || false; currentResponseStyle = conv.responseStyle || 'normal'; currentDataResidency = conv.dataResidency || 'us'; isMedTermEnabled = conv.medTermEnabled || false; isEquipSpecEnabled = conv.equipSpecEnabled || false; isRagEnabled = conv.ragEnabled || false; currentKbEndpoint = conv.kbEndpoint || ''; updateSettingsUI(); conversationTitle.textContent = conv.name; conversationTitleInput.value = conv.name; chatContainer.innerHTML = ''; if (conv.history.length === 0) { const initialMsgId = generateId(); addMessage('Hello! How can I help you today?', 'assistant', { messageId: initialMsgId }); conv.history.push({ role: 'assistant', content: 'Hello! How can I help you today?', id: initialMsgId }); } else { conv.history.forEach(msg => { addMessage(msg.content, msg.role, { messageId: msg.id, isHtml: msg.role === 'assistant', citations: msg.citations, confidence: msg.confidence }); }); } if (currentViewMode === 'dashboard' && conv.associatedDocument) { document.getElementById('documentViewerPlaceholder').innerHTML = `Loading ${conv.associatedDocument.name}...`; } else if (currentViewMode === 'dashboard') { document.getElementById('documentViewerPlaceholder').innerHTML = `<span>No document loaded. Upload one.</span>`; } resetFileUpload(); messageInput.value = ''; autoResizeTextarea(); updateButtonStates(); highlightActiveConversation(); saveConversations(); rightPanel.innerHTML = '<h3 style="color: var(--text-muted); text-align: center; margin-bottom: 1rem;">Details & Artifacts</h3>'; rightPanel.classList.remove('visible'); conv.artifacts?.forEach(renderArtifact); /* Load artifacts if stored */ loadNotepadContent(); /* Load notepad */ }
+        function renderConversationList() { conversationList.innerHTML = ''; const sortedIds = Object.keys(conversations).sort((a, b) => new Date(conversations[b].createdAt || 0) - new Date(conversations[a].createdAt || 0)); sortedIds.forEach(id => { const conv = conversations[id]; const item = document.createElement('button'); item.className = 'sidebar-item'; item.dataset.convId = id; item.title = conv.name; item.innerHTML = `<span>&#128172;</span><span class="sidebar-item-text">${conv.name}</span>`; item.onclick = () => loadConversation(id); conversationList.appendChild(item); }); highlightActiveConversation(); }
+        function highlightActiveConversation() { document.querySelectorAll('.sidebar-item').forEach(item => { item.classList.toggle('active', item.dataset.convId === currentConversationId); }); }
+        function renameConversation(id, newName) { if (conversations[id] && newName.trim()) { conversations[id].name = newName.trim(); saveConversations(); renderConversationList(); if (id === currentConversationId) { conversationTitle.textContent = newName.trim(); } } }
+        function deleteConversation(id) { if (!conversations[id]) return; if (Object.keys(conversations).length <= 1) { alert("Cannot delete the last conversation."); return; } if (confirm(`Delete "${conversations[id].name}"?`)) { delete conversations[id]; if (currentConversationId === id) { currentConversationId = null; const remainingIds = Object.keys(conversations); if (remainingIds.length > 0) { loadConversation(remainingIds[0]); } else { createNewConversation(); } } saveConversations(); renderConversationList(); } }
+        function deleteMessageHandler(messageId) { if (!currentConversationId || !conversations[currentConversationId]) return; const conversation = conversations[currentConversationId]; const messageIndex = conversation.history.findIndex(msg => msg.id === messageId); if (messageIndex > -1) { conversation.history.splice(messageIndex, 1); const messageElement = chatContainer.querySelector(`[data-message-id="${messageId}"]`); if (messageElement) { messageElement.remove(); } saveConversations(); console.log("Deleted message:", messageId); } else { console.warn("Message ID not found in history:", messageId); const messageElement = chatContainer.querySelector(`[data-message-id="${messageId}"]`); if (messageElement) messageElement.remove(); } }
+        function showHistoryEditModal() { if (!currentConversationId || !conversations[currentConversationId]) return; const conversation = conversations[currentConversationId]; historyEditContent.innerHTML = ''; if (conversation.history.length === 0) { historyEditContent.innerHTML = '<p style="color: var(--text-muted);">History is empty.</p>'; } else { conversation.history.forEach(msg => { const itemDiv = document.createElement('div'); itemDiv.style.cssText = `margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed var(--border-color);`; itemDiv.dataset.messageId = msg.id; const roleLabel = document.createElement('strong'); roleLabel.textContent = msg.role.charAt(0).toUpperCase() + msg.role.slice(1); roleLabel.style.color = msg.role === 'user' ? 'var(--accent-primary)' : 'var(--text-secondary)'; roleLabel.style.cssText = `display: block; margin-bottom: 0.3rem;`; const contentDiv = document.createElement('div'); contentDiv.textContent = msg.content; contentDiv.style.cssText = `white-space: pre-wrap; font-size: 0.9rem;`; const deleteBtn = document.createElement('button'); deleteBtn.innerHTML = '&times; Delete'; deleteBtn.style.cssText = `float: right; background: none; border: 1px solid var(--danger-color); color: var(--danger-color); padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-left: 1rem;`; deleteBtn.onclick = () => { itemDiv.remove(); deleteMessageHandler(msg.id); if (historyEditContent.childElementCount === 0) { historyEditContent.innerHTML = '<p style="color: var(--text-muted);">History is empty.</p>'; } }; itemDiv.appendChild(deleteBtn); itemDiv.appendChild(roleLabel); itemDiv.appendChild(contentDiv); historyEditContent.appendChild(itemDiv); }); } historyEditModal.classList.add('active'); }
+        function renderArtifact(artifact) { if (!rightPanel.classList.contains('visible')) { rightPanel.classList.add('visible'); } const placeholder = rightPanel.querySelector('h3'); if(placeholder && placeholder.textContent.includes('Artifacts')) placeholder.remove(); const artifactDiv = document.createElement('div'); artifactDiv.className = 'artifact'; artifactDiv.dataset.artifactId = artifact.id || generateId(); let contentHtml = ''; const type = artifact.type || 'text'; const title = artifact.title || `Artifact (${type})`; if (type === 'code') { const lang = artifact.language || ''; contentHtml = `<pre><code class="language-${lang}">${artifact.content}</code></pre>`; } else if (type === 'markdown') { contentHtml = marked.parse(artifact.content); } else { contentHtml = `<p>${artifact.content.replace(/\n/g, '<br>')}</p>`; } artifactDiv.innerHTML = `<div class="artifact-header"><span class="artifact-title">${title}</span><span class="artifact-type">${type}</span></div><div class="artifact-content">${contentHtml}</div>`; rightPanel.appendChild(artifactDiv); if (type === 'code') { artifactDiv.querySelectorAll('pre code').forEach(hljs.highlightElement); const pre = artifactDiv.querySelector('pre'); if (pre) { const block = pre.querySelector('code'); const copyBtn = document.createElement('button'); copyBtn.className = 'copy-code-btn'; copyBtn.textContent = 'Copy'; copyBtn.onclick = () => copyCodeHandler(block, copyBtn); pre.style.position = 'relative'; pre.appendChild(copyBtn); } } }
+        function toggleViewMode() { if (currentViewMode === 'chat') { currentViewMode = 'dashboard'; mainContent.classList.add('dashboard-view'); inputContainer.style.display = 'none'; analysisDashboard.style.display = 'flex'; viewModeToggle.textContent = 'Chat View'; if (currentConversationId && conversations[currentConversationId]?.associatedDocument) { document.getElementById('documentViewerPlaceholder').innerHTML = `Loading ${conversations[currentConversationId].associatedDocument.name}...`; } else { document.getElementById('documentViewerPlaceholder').innerHTML = `<span>No document loaded.</span>`; } rightPanel.classList.add('visible'); } else { currentViewMode = 'chat'; mainContent.classList.remove('dashboard-view'); inputContainer.style.display = 'block'; analysisDashboard.style.display = 'none'; viewModeToggle.textContent = 'Dashboard View'; if (!rightPanel.querySelector('.artifact')) { rightPanel.classList.remove('visible'); } } }
+        function toggleBatchPanel() { isBatchPanelVisible = !isBatchPanelVisible; batchProcessingPanel.classList.toggle('visible', isBatchPanelVisible); if (isBatchPanelVisible) { fetchBatchJobs(); } }
+        async function fetchBatchJobs() { console.log("Fetching batch jobs..."); batchQueueList.innerHTML = '<div class="placeholder-text">Loading...</div>'; await new Promise(resolve => setTimeout(resolve, 1000)); batchQueueList.innerHTML = `<div class="batch-item"><span class="batch-item-name">Batch_Report_01 (100 docs)</span><div style="display: flex; align-items: center;"><span class="batch-item-status processing">Processing...</span><div class="batch-item-progress"><div class="batch-item-progress-bar" style="width: 75%;"></div></div></div></div><div class="batch-item"><span class="batch-item-name">Hist_Analysis (5 docs)</span><span class="batch-item-status completed">Completed</span></div><div class="batch-item"><span class="batch-item-name">Urgent_Review (1 doc)</span><span class="batch-item-status failed">Failed</span></div>`; }
+        function switchSettingsTab(tabName) { settingsTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.tab === tabName)); settingsContents.forEach(content => content.classList.toggle('active', content.id === `settings-tab-${tabName}`)); }
+        function updateSettingsUI() { modelSelector.value = selectedModel; activeModelDisplay.textContent = `Current: ${selectedModel}`; temperatureSlider.value = currentTemperature; temperatureValue.textContent = currentTemperature.toFixed(1); thinkingModeToggle.checked = isThinkingModeEnabled; webSearchToggle.checked = isWebSearchEnabled; document.querySelector(`input[name="responseStyle"][value="${currentResponseStyle}"]`).checked = true; dataResidency.value = currentDataResidency; medTermToggle.checked = isMedTermEnabled; equipSpecToggle.checked = isEquipSpecEnabled; ragToggle.checked = isRagEnabled; kbEndpoint.value = currentKbEndpoint; }
+
+        // --- Notepad Functions ---
+        function saveNotepadContent() {
+            const content = notepadContent.innerHTML; // Save HTML to preserve basic formatting
+            localStorage.setItem('kynseyAiNotepadContent_global', content); // Use a distinct key for global
+
+            if (currentConversationId && conversations[currentConversationId]) {
+                conversations[currentConversationId].notepadContent = content;
+                saveConversations(); // This saves the whole conversations object
+            }
+             console.log("Notepad content saved.");
+        }
+        function loadNotepadContent() {
+            let contentToLoad = '';
+            // Try conversation-specific first
+            if (currentConversationId && conversations[currentConversationId] && conversations[currentConversationId].notepadContent) {
+                contentToLoad = conversations[currentConversationId].notepadContent;
+                 console.log("Loading notepad from current conversation.");
+            } else {
+                // Fallback to global content
+                contentToLoad = localStorage.getItem('kynseyAiNotepadContent_global') || '';
+                 console.log("Loading notepad from global storage.");
+            }
+            notepadContent.innerHTML = contentToLoad;
+            updateNotepadStatus('Ready');
+        }
+        function updateNotepadStatus(message) {
+            notepadStatus.textContent = message;
+            notepadStatus.style.opacity = '1';
+            setTimeout(() => { notepadStatus.style.opacity = '0.7'; }, 1500);
+        }
+        function initializeNotepad() {
+            loadNotepadContent(); // Load initial content
+            notepadContent.setAttribute('data-placeholder', 'Type your notes here... Use /note in chat or ask AI to edit.');
+            updateNotepadStatus('Ready');
+
+            // Define the function for AI updates globally or attach to window
+            window.updateNotepadFromAI = function(newContentHtml, highlightChanges = true) {
+                console.log("Updating notepad from AI.");
+                notepadContent.innerHTML = sanitizeHTML(newContentHtml); // Directly set HTML content from AI
+
+                if (highlightChanges) {
+                    // Apply highlight to top-level block elements for visual feedback
+                    const elements = notepadContent.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, div, pre, blockquote, table');
+                    elements.forEach(el => {
+                        // Check if element was likely added/modified (simple check: has content)
+                        if (el.textContent.trim().length > 0) {
+                            el.classList.add('ai-edit-highlight');
+                            // Remove highlight class after animation (matches CSS animation duration)
+                            // setTimeout(() => { el.classList.remove('ai-edit-highlight'); }, 3000); // Let CSS handle removal via animation
+                        }
+                    });
+                }
+
+                saveNotepadContent();
+                updateNotepadStatus('Updated by AI');
+
+                if (!notepadContainer.classList.contains('visible')) {
+                    notepadContainer.classList.add('visible');
+                }
+            };
+        }
+        function handleAINotepadEdit(aiMessage) {
+            const notepadRegex = /\[NOTEPAD:BEGIN\]([\s\S]*?)\[NOTEPAD:END\]/im; // Case-insensitive, multiline
+            const match = aiMessage.match(notepadRegex);
+
+            if (match && match[1]) {
+                console.log("Found notepad edit command in AI response.");
+                const notepadContentHtml = match[1].trim(); // Assume AI provides HTML or Markdown
+                // If AI provides Markdown, parse it here:
+                // const parsedHtml = marked.parse(notepadContentHtml);
+                // window.updateNotepadFromAI(parsedHtml);
+                // For now, assume AI gives usable HTML or plain text formatted correctly
+                window.updateNotepadFromAI(notepadContentHtml);
+
+                // Return the message without the notepad markers
+                return aiMessage.replace(notepadRegex, '').trim();
+            }
+            return aiMessage; // Return unchanged
+        }
+
+
+        // --- Core API Interaction (Modified to handle notepad edits) ---
+        async function sendMessageToLLM() {
+            const messageText = messageInput.value.trim();
+            const currentConv = conversations[currentConversationId];
+            if (!currentConv) { alert("Error: No active conversation."); return; }
+            if (!messageText && !selectedFile) { return; }
+
+            isWaitingForResponse = true; updateButtonStates();
+            if (currentAbortController) { currentAbortController.abort(); }
+            currentAbortController = new AbortController();
+
+            const userMessageId = generateId();
+            let userMessageContent = messageText;
+
+            if (messageText) { addMessage(messageText, 'user-message', { messageId: userMessageId }); currentConv.history.push({ role: 'user', content: messageText, id: userMessageId }); }
+
+            let filePayload = null;
+            if (selectedFile) {
+                addFilePlaceholderMessage(selectedFile); filePayload = { ...selectedFile };
+                if (!currentConv.associatedDocument) { currentConv.associatedDocument = { name: selectedFile.name, type: selectedFile.type, id: generateId() }; if (currentViewMode === 'dashboard') { document.getElementById('documentViewerPlaceholder').innerHTML = `Loading ${selectedFile.name}...`; } }
+            }
+
+            messageInput.value = ''; autoResizeTextarea();
+            const stagedFile = selectedFile; selectedFile = null;
+
+            const payload = {
+                message: userMessageContent, history: currentConv.history.slice(-20), // Increased history slightly
+                model: selectedModel, temperature: currentTemperature, responseStyle: currentResponseStyle,
+                thinkingMode: isThinkingModeEnabled, webSearch: isWebSearchEnabled,
+                enableMedicalTerms: isMedTermEnabled, enableEquipmentAnalysis: isEquipSpecEnabled,
+                enableRag: isRagEnabled, knowledgeBaseEndpoint: isRagEnabled ? currentKbEndpoint : null,
+                file: stagedFile ? { name: stagedFile.name, type: stagedFile.type, base64: stagedFile.base64, processingOptions: { ocr: currentUploadOptions.ocr, extractTables: currentUploadOptions.tables, segment: currentUploadOptions.segment, workflowId: currentUploadOptions.workflow } } : null,
+            };
+
+            removeStreamingIndicator();
+            const assistantMessageId = generateId();
+            currentStreamingMessageElement = addMessage("", 'assistant', { messageId: assistantMessageId });
+            currentStreamingMessageElement.classList.add('streaming');
+
+            let fullResponseText = ""; let receivedCitations = null; let receivedArtifacts = []; let receivedConfidence = null;
+
+            try {
+                console.log("Sending payload (structure):", { ...payload, file: payload.file ? {...payload.file, base64: "[omitted]"} : null, history: `[${payload.history?.length || 0} items]` });
+                const response = await fetch(API_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: currentAbortController.signal });
+                if (!response.ok) { throw new Error(`API Error (${response.status})`); }
+
+                const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = '';
+                while (true) {
+                    const { value, done } = await reader.read(); if (done) break;
+                    buffer += decoder.decode(value, { stream: true }); const lines = buffer.split('\n'); buffer = lines.pop();
+                    for (const line of lines) {
+                         if (line.trim().startsWith('data:')) {
+                             try {
+                                 const jsonData = JSON.parse(line.substring(5).trim());
+                                 if (jsonData.type === 'chunk' && jsonData.content) { fullResponseText += jsonData.content; currentStreamingMessageElement.innerHTML = marked.parse(fullResponseText); chatContainer.scrollTop = chatContainer.scrollHeight; }
+                                 else if (jsonData.type === 'citation') { receivedCitations = jsonData.data; }
+                                 else if (jsonData.type === 'artifact') { receivedArtifacts.push(jsonData.data); renderArtifact(jsonData.data); }
+                                 else if (jsonData.type === 'confidence') { receivedConfidence = jsonData.score; }
+                                 else if (jsonData.type === 'entity') { console.log("Received entity:", jsonData.data); }
+                                 else if (jsonData.type === 'done') { console.log("Stream done signal."); }
+                             } catch (e) { console.error("Stream parsing error:", e); }
+                         }
+                    }
+                     if (currentStreamingMessageElement && !currentStreamingMessageElement.classList.contains('streaming')) { currentStreamingMessageElement.classList.add('streaming'); }
+                } // End while loop
+
+                removeStreamingIndicator();
+
+                // --- Handle Notepad Edit BEFORE saving history/updating final UI ---
+                const cleanedResponseText = handleAINotepadEdit(fullResponseText);
+                // ---
+
+                // Final message bubble update with cleaned text and citations
+                if (currentStreamingMessageElement) {
+                    currentStreamingMessageElement.innerHTML = marked.parse(cleanedResponseText); // Use cleaned text
+                    if (receivedCitations && receivedCitations.length > 0) {
+                        const citationList = document.createElement('div'); citationList.className = 'citation-source-list'; let listHtml = '<h4>Sources:</h4><ul>';
+                        receivedCitations.forEach((cite, index) => { const citeNum = index + 1; const regex = new RegExp(`\\\[${citeNum}\\\](?![\w-])`, 'g'); currentStreamingMessageElement.innerHTML = currentStreamingMessageElement.innerHTML.replace(regex, `<span class="citation" title="${cite.title || cite.url}" data-url="${cite.url}">[${citeNum}]</span>`); listHtml += `<li>[${citeNum}] <a href="${cite.url}" target="_blank" rel="noopener noreferrer">${cite.title || cite.url}</a></li>`; });
+                        listHtml += '</ul>'; citationList.innerHTML = listHtml; currentStreamingMessageElement.appendChild(citationList);
+                    }
+                     // Final syntax highlighting run on cleaned content
+                     currentStreamingMessageElement.querySelectorAll('pre code').forEach((block) => { hljs.highlightElement(block); const pre = block.parentElement; if (pre && pre.tagName === 'PRE' && !pre.querySelector('.copy-code-btn')) { const copyBtn = document.createElement('button'); copyBtn.className = 'copy-code-btn'; copyBtn.textContent = 'Copy'; copyBtn.onclick = () => copyCodeHandler(block, copyBtn); pre.appendChild(copyBtn); } });
+                     // Add confidence score if present
+                     if (receivedConfidence !== null) {
+                         const confidenceSpan = document.createElement('span'); confidenceSpan.className = 'confidence-score'; confidenceSpan.textContent = `(${(receivedConfidence * 100).toFixed(0)}%)`;
+                         let inserted = false; for(let node of currentStreamingMessageElement.childNodes) { if(node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) { node.parentNode.insertBefore(confidenceSpan, node.nextSibling); inserted = true; break; } } if (!inserted) currentStreamingMessageElement.appendChild(confidenceSpan);
+                     }
+                }
+
+                // Add final assistant response (cleaned) to history
+                if (cleanedResponseText || receivedArtifacts.length > 0) {
+                    currentConv.history.push({ role: 'assistant', content: cleanedResponseText || "[Generated artifacts]", id: assistantMessageId, citations: receivedCitations, artifacts: receivedArtifacts.map(a => a.id), confidence: receivedConfidence });
+                }
+                saveConversations();
+
+            } catch (error) { removeStreamingIndicator(); console.error('Error during API call:', error); if (error.name === 'AbortError') { console.log('Fetch aborted'); if (currentStreamingMessageElement && fullResponseText.length < 10) { currentStreamingMessageElement.remove(); } } else { addMessage(`Sorry, error: ${error.message}.`, 'assistant', { messageId: generateId() }); if (currentStreamingMessageElement) currentStreamingMessageElement.remove(); } }
+            finally { isWaitingForResponse = false; updateButtonStates(); messageInput.focus(); currentAbortController = null; removeStreamingIndicator(); }
+        }
+
+
+        // --- Event Listeners ---
+        viewModeToggle.addEventListener('click', toggleViewMode);
+        batchProcessingToggleBtn.addEventListener('click', toggleBatchPanel);
+        closeBatchPanelBtn.addEventListener('click', toggleBatchPanel);
+        startNewBatchBtn.addEventListener('click', () => { alert("Starting new batch job not implemented."); });
+        settingsTabs.forEach(tab => { tab.addEventListener('click', () => switchSettingsTab(tab.dataset.tab)); });
+        dataResidency.addEventListener('change', (e) => { currentDataResidency = e.target.value; if (currentConversationId && conversations[currentConversationId]) { conversations[currentConversationId].dataResidency = currentDataResidency; saveConversations(); } });
+        medTermToggle.addEventListener('change', (e) => { isMedTermEnabled = e.target.checked; if (currentConversationId && conversations[currentConversationId]) { conversations[currentConversationId].medTermEnabled = isMedTermEnabled; saveConversations(); } });
+        equipSpecToggle.addEventListener('change', (e) => { isEquipSpecEnabled = e.target.checked; if (currentConversationId && conversations[currentConversationId]) { conversations[currentConversationId].equipSpecEnabled = isEquipSpecEnabled; saveConversations(); } });
+        ragToggle.addEventListener('change', (e) => { isRagEnabled = e.target.checked; if (currentConversationId && conversations[currentConversationId]) { conversations[currentConversationId].ragEnabled = isRagEnabled; saveConversations(); } });
+        kbEndpoint.addEventListener('change', (e) => { currentKbEndpoint = e.target.value; if (currentConversationId && conversations[currentConversationId]) { conversations[currentConversationId].kbEndpoint = currentKbEndpoint; saveConversations(); } });
+        enableOcr.addEventListener('change', (e) => currentUploadOptions.ocr = e.target.checked);
+        extractTables.addEventListener('change', (e) => currentUploadOptions.tables = e.target.checked);
+        segmentDoc.addEventListener('change', (e) => currentUploadOptions.segment = e.target.checked);
+        workflowSelect.addEventListener('change', (e) => currentUploadOptions.workflow = e.target.value);
+        chatForm.addEventListener('submit', (e) => { e.preventDefault(); if (!sendButton.disabled) { sendMessageToLLM(); } });
+        messageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!sendButton.disabled) { sendMessageToLLM(); } } if (e.key === '/' && messageInput.value.trim() === '') { renderTemplatesPopup(); templatesPopup.classList.add('active'); } });
+        messageInput.addEventListener('input', autoResizeTextarea);
+        settingsBtn.addEventListener('click', () => settingsPanel.classList.add('active'));
+        closeSettings.addEventListener('click', () => settingsPanel.classList.remove('active'));
+        uploadFileBtn.addEventListener('click', () => { resetFileUpload(); fileUploadModal.classList.add('active'); });
+        closeFileUploadModal.addEventListener('click', () => fileUploadModal.classList.remove('active'));
+        cancelUpload.addEventListener('click', () => { fileUploadModal.classList.remove('active'); resetFileUpload(); });
+        dropArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('dragover'); });
+        dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
+        dropArea.addEventListener('drop', (e) => { e.preventDefault(); dropArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+        confirmUpload.addEventListener('click', () => { if (selectedFile) { fileUploadModal.classList.remove('active'); sendMessageToLLM(); } }); // Send immediately on confirm
+        clearCurrentHistoryBtn.addEventListener('click', () => { if (!currentConversationId || !conversations[currentConversationId]) return; if (confirm(`Clear history for "${conversations[currentConversationId].name}"?`)) { conversations[currentConversationId].history = []; loadConversation(currentConversationId); saveConversations(); settingsPanel.classList.remove('active'); } });
+        newChatBtn.addEventListener('click', () => { createNewConversation(); if (sidebar.classList.contains('expanded') && window.innerWidth < 768) { sidebar.classList.remove('expanded'); collapseToggleBtn.innerHTML = '<span>&gt;</span>'; } });
+        responseStyleOptions.forEach(radio => { radio.addEventListener('change', function() { if (this.checked) { currentResponseStyle = this.value; if (currentConversationId && conversations[currentConversationId]) { conversations[currentConversationId].responseStyle = currentResponseStyle; saveConversations(); } } }); });
+        collapseToggleBtn.addEventListener('click', () => { sidebar.classList.toggle('expanded'); collapseToggleBtn.innerHTML = sidebar.classList.contains('expanded') ? '<span>&lt;</span>' : '<span>&gt;</span>'; collapseToggleBtn.title = sidebar.classList.contains('expanded') ? "Collapse Menu" : "Expand Menu"; });
+        conversationTitle.addEventListener('click', () => { conversationTitle.style.display = 'none'; conversationTitleInput.style.display = 'inline-block'; conversationTitleInput.focus(); conversationTitleInput.select(); });
+        conversationTitleInput.addEventListener('blur', () => { const newName = conversationTitleInput.value.trim(); if (newName && currentConversationId) { renameConversation(currentConversationId, newName); conversationTitle.textContent = newName; } else { conversationTitleInput.value = conversations[currentConversationId]?.name || "Chat"; } conversationTitle.style.display = 'inline-block'; conversationTitleInput.style.display = 'none'; });
+        conversationTitleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); conversationTitleInput.blur(); } else if (e.key === 'Escape') { conversationTitleInput.value = conversations[currentConversationId]?.name || "Chat"; conversationTitleInput.blur(); } });
+        modelSelector.addEventListener('change', (e) => { selectedModel = e.target.value; activeModelDisplay.textContent = `Current: ${selectedModel}`; if (currentConversationId && conversations[currentConversationId]) { conversations[currentConversationId].model = selectedModel; saveConversations(); } });
+        temperatureSlider.addEventListener('input', (e) => { currentTemperature = parseFloat(e.target.value); temperatureValue.textContent = currentTemperature.toFixed(1); });
+        temperatureSlider.addEventListener('change', () => { if (currentConversationId && conversations[currentConversationId]) { conversations[currentConversationId].temperature = currentTemperature; saveConversations(); } });
+        thinkingModeToggle.addEventListener('change', (e) => { isThinkingModeEnabled = e.target.checked; if (currentConversationId && conversations[currentConversationId]) { conversations[currentConversationId].thinkingMode = isThinkingModeEnabled; saveConversations(); } });
+        webSearchToggle.addEventListener('change', (e) => { isWebSearchEnabled = e.target.checked; if (currentConversationId && conversations[currentConversationId]) { conversations[currentConversationId].webSearch = isWebSearchEnabled; saveConversations(); } });
+        viewEditHistoryBtn.addEventListener('click', showHistoryEditModal);
+        closeHistoryModal.addEventListener('click', () => historyEditModal.classList.remove('active'));
+        cancelHistoryEdit.addEventListener('click', () => historyEditModal.classList.remove('active'));
+        templateBtn.addEventListener('click', (e) => { e.stopPropagation(); renderTemplatesPopup(); templatesPopup.classList.toggle('active'); });
+        document.addEventListener('click', (event) => { if (settingsPanel.classList.contains('active') && !settingsPanel.contains(event.target) && !settingsBtn.contains(event.target)) { settingsPanel.classList.remove('active'); } if (templatesPopup.classList.contains('active') && !templatesPopup.contains(event.target) && !templateBtn.contains(event.target)) { templatesPopup.classList.remove('active'); } if (historyEditModal.classList.contains('active') && !historyEditModal.querySelector('.modal-content').contains(event.target)) { historyEditModal.classList.remove('active'); } if (fileUploadModal.classList.contains('active') && !fileUploadModal.querySelector('.modal-content').contains(event.target)) { fileUploadModal.classList.remove('active'); resetFileUpload(); } if (notepadContainer.classList.contains('visible') && !notepadContainer.contains(event.target) && !notepadToggleBtn.contains(event.target)) { /* Don't auto-close notepad on outside click */ } });
+
+        // --- Notepad Event Listeners ---
+        notepadToggleBtn.addEventListener('click', () => {
+            notepadContainer.classList.toggle('visible');
+            if (notepadContainer.classList.contains('visible')) { notepadContent.focus(); }
+        });
+        notepadCollapseBtn.addEventListener('click', () => { notepadContainer.classList.remove('visible'); });
+        notepadClearBtn.addEventListener('click', () => {
+            if (notepadContent.textContent.trim() === '') return;
+            if (confirm('Clear all notes?')) { notepadContent.innerHTML = ''; saveNotepadContent(); updateNotepadStatus('Cleared'); }
+        });
+        notepadSaveBtn.addEventListener('click', () => { saveNotepadContent(); updateNotepadStatus('Saved'); });
+        notepadAskLLMBtn.addEventListener('click', () => {
+            const noteText = notepadContent.textContent; // Get text content for the prompt
+            if (!noteText.trim()) { updateNotepadStatus('Nothing to edit'); return; }
+            // Simple prompt example - enhance as needed
+            const prompt = `Please review, edit for clarity and organization, and potentially summarize the following notes. Format the output using basic HTML (paragraphs, lists, bold). Respond ONLY with the edited notes enclosed in [NOTEPAD:BEGIN] and [NOTEPAD:END] tags.\n\nNotes:\n${noteText}`;
+            messageInput.value = prompt;
+            updateNotepadStatus('Ready to ask AI'); autoResizeTextarea(); updateButtonStates(); messageInput.focus();
+            // notepadContainer.classList.remove('visible'); // Optional: close notepad
+        });
+        let saveTimeout;
+        notepadContent.addEventListener('input', () => {
+            updateNotepadStatus('Editing...'); clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => { saveNotepadContent(); updateNotepadStatus('Auto-saved'); }, 1500); // Slightly longer delay
+        });
+        messageInput.addEventListener('keyup', function(e) {
+            if (this.value.trim().startsWith('/note ')) {
+                const noteToAdd = this.value.trim().substring(6);
+                if (!notepadContainer.classList.contains('visible')) { notepadContainer.classList.add('visible'); }
+                const currentContent = notepadContent.innerHTML;
+                // Add a line break if needed
+                if (currentContent && !currentContent.endsWith('<br>') && !currentContent.endsWith('</p></div>')) { // Check common block element endings
+                     notepadContent.innerHTML += '<br>';
+                }
+                // Append as a simple paragraph (or use a more structured format)
+                const p = document.createElement('p');
+                p.textContent = noteToAdd; // Use textContent to avoid HTML injection from user input
+                notepadContent.appendChild(p);
+                // Scroll to bottom of notepad
+                notepadContent.scrollTop = notepadContent.scrollHeight;
+
+                saveNotepadContent(); updateNotepadStatus('Note added');
+                this.value = ''; autoResizeTextarea(); updateButtonStates();
+                e.preventDefault(); // Prevent potential form submission if Enter was used
+            }
+        });
+
+
+        // --- Initialization ---
+        function initializeApp() {
+             console.log("Initializing Enterprise App Concept...");
+             loadConversations(); // Includes initial loadConversation call
+             updateSettingsUI();
+             autoResizeTextarea();
+             updateButtonStates();
+             messageInput.focus();
+             hljs.configure({ ignoreUnescapedHTML: true });
+             if (currentViewMode !== 'chat') { toggleViewMode(); }
+             initializeNotepad(); // Initialize notepad after conversations are loaded
+             updateNotificationCount(3); // Example notification count
+             console.log("App Initialized. Current Conv ID:", currentConversationId);
+        }
+        function updateNotificationCount(count) { if (count > 0) { notificationBadge.textContent = count; notificationBadge.style.display = 'flex'; } else { notificationBadge.style.display = 'none'; } }
+        function renderTemplatesPopup() { templatesPopup.innerHTML = ''; const promptTemplates = [ { name: "Summarize Text", prompt: "Please summarize the following text:\n\n" }, { name: "Explain Code", prompt: "Explain this code snippet:\n\n```\n[Your Code Here]\n```\n" }, { name: "Translate to French", prompt: "Translate the following text to French:\n\n" }, { name: "Brainstorm Ideas", prompt: "Brainstorm ideas for:\n\n" }, { name: "Write Email", prompt: "Write a professional email about:\n\nSubject: [Subject]\n\nBody:\n" }, ]; promptTemplates.forEach(template => { const item = document.createElement('div'); item.className = 'template-item'; item.innerHTML = `<strong>${template.name}</strong> ${template.prompt.substring(0, 50)}...`; item.onclick = () => { messageInput.value = template.prompt; templatesPopup.classList.remove('active'); messageInput.focus(); autoResizeTextarea(); }; templatesPopup.appendChild(item); }); }
+
+
+        // Start the application
+        initializeApp();
+
+    </script>
+</body>
+</html>

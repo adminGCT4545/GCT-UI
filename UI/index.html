@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCT Enterprise App Concept</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/modals.css">
+    <link rel="stylesheet" href="css/utilities.css">
+    
+    <!-- External Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.10/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar expanded" id="sidebar">
+            <div class="sidebar-header">
+                <button class="sidebar-button" id="newChatBtn" title="New Chat"><span>+</span> <span class="sidebar-item-text">New Chat</span></button>
+                <button class="sidebar-button" id="collapseToggleBtn" title="Collapse Menu"><span>&lt;</span></button>
+            </div>
+            <div id="conversationList"></div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Workflows</div>
+                <button class="sidebar-button" id="approvalQueueBtn" title="Approval Queue"><span>&#128204;</span> <span class="sidebar-item-text">Approvals <span class="badge">3</span></span></button>
+                <button class="sidebar-button" id="batchProcessingToggleBtn" title="Batch Processing"><span>&#128230;</span> <span class="sidebar-item-text">Batch Jobs</span></button>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Knowledge</div>
+                <button class="sidebar-button" id="docLibraryBtn" title="Document Library"><span>&#128193;</span> <span class="sidebar-item-text">Doc Library</span></button>
+            </div>
+            
+            <div class="sidebar-footer">
+                <button class="sidebar-button" id="settingsBtn" title="Settings"><span>&#9881;</span> <span class="sidebar-item-text">Settings</span></button>
+            </div>
+        </div>
+
+        <!-- Main Content Wrapper -->
+        <div class="main-content-wrapper">
+            <div class="main-content" id="mainContent">
+                <!-- Header -->
+                <header class="header">
+                    <div class="header-left">
+                        <h1 class="app-title">GCT Enterprise</h1>
+                        <p class="app-subtitle">AI Assistant</p>
+                    </div>
+                    <div class="header-right">
+                        <h2 id="conversationTitle">New Conversation</h2>
+                        <input type="text" id="conversationTitleInput" placeholder="Conversation Title">
+                        <button id="viewModeToggle" class="settings-button">Dashboard View</button>
+                        <div id="notification-badge">0</div>
+                    </div>
+                </header>
+                
+                <!-- Chat Container -->
+                <main class="chat-container" id="chatContainer"></main>
+                
+                <!-- Input Container -->
+                <div class="input-container">
+                    <form id="messageForm" class="input-wrapper">
+                        <div class="input-actions">
+                            <button type="button" class="input-action-button" id="templateBtn" title="Prompt Templates"><span>&#128220;</span></button>
+                            <button type="button" class="input-action-button" id="uploadFileBtn" title="Upload File"><span>&#128206;</span></button>
+                            <button type="button" class="input-action-button" id="notepadToggleBtn" title="Toggle Notepad"><span>&#128221;</span></button>
+                            <input type="file" id="fileInput" accept="image/*,application/pdf,.txt,.csv,.json,.md,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/dicom,.dcm">
+                        </div>
+                        <textarea class="message-input" id="messageInput" placeholder="Ask about the document or use /note ..." rows="1"></textarea>
+                        <button type="button" class="send-button" id="sendButton" disabled>Send</button>
+                    </form>
+                </div>
+                
+                <!-- Multimodal Analysis Dashboard (Initially Hidden) -->
+                <div class="analysis-dashboard" id="analysisDashboard">
+                    <div class="dashboard-section">
+                        <h3 class="dashboard-section-title">Document Viewer</h3>
+                        <div id="documentViewerPlaceholder">
+                            <div id="annotationToolbar">
+                                <button class="tool-btn">Highlight</button>
+                                <button class="tool-btn">Comment</button>
+                                <button class="tool-btn">Draw</button>
+                            </div>
+                            <span>No document loaded. Upload one.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-section">
+                        <h3 class="dashboard-section-title">Detected Entities & Analysis</h3>
+                        <div id="entityHighlightPlaceholder">
+                            <span>Entity extraction will appear here after document analysis.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-section">
+                        <h3 class="dashboard-section-title">Advanced Analytics</h3>
+                        <div id="timeSeriesChartPlaceholder">Time-Series Visualization</div>
+                        <div id="anomalyVizPlaceholder">Anomaly Detection</div>
+                        <div id="predictiveVizPlaceholder">Predictive Analysis</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Panel (Initially Hidden) -->
+            <div class="right-panel" id="rightPanel">
+                <h3 style="color: var(--text-muted); text-align: center; margin-bottom: 1rem;">Details & Artifacts</h3>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Templates Popup (Initially Hidden) -->
+    <div class="templates-popup" id="templatesPopup">
+        <div class="template-item">Analyze this document</div>
+        <div class="template-item">Summarize key points</div>
+        <div class="template-item">Extract data from this table</div>
+        <div class="template-item">Compare with previous version</div>
+        <div class="template-item">Generate report</div>
+    </div>
+    
+    <!-- Settings Panel (Initially Hidden) -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-header">
+            <h2 class="settings-title">Settings & Configuration</h2>
+            <button class="close-settings" id="closeSettings">&times;</button>
+        </div>
+        
+        <div class="settings-tabs">
+            <button class="settings-tab active" data-tab="general">General</button>
+            <button class="settings-tab" data-tab="model">Model</button>
+            <button class="settings-tab" data-tab="security">Security</button>
+            <button class="settings-tab" data-tab="workflows">Workflows</button>
+            <button class="settings-tab" data-tab="integrations">Integrations</button>
+            <button class="settings-tab" data-tab="knowledge">Knowledge</button>
+        </div>
+        
+        <div class="settings-content-wrapper">
+            <div class="settings-content active" id="settings-tab-general">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Conversation</h3>
+                    <button id="viewEditHistoryBtn" class="settings-button">View / Edit History</button>
+                    <button id="clearConversationBtn" class="settings-button danger">Clear Conversation</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Response Style</h3>
+                    <div class="settings-option"><input type="radio" id="professionalStyle" name="responseStyle" value="professional"><label for="professionalStyle">Professional</label></div>
+                    <div class="settings-option"><input type="radio" id="conciseStyle" name="responseStyle" value="concise"><label for="conciseStyle">Concise</label></div>
+                    <div class="settings-option"><input type="radio" id="normalStyle" name="responseStyle" value="normal" checked><label for="normalStyle">Normal</label></div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Advanced Modes</h3>
+                    <div class="settings-option"><input type="checkbox" id="thinkingModeToggle"><label for="thinkingModeToggle">Enable Extended Reasoning</label></div>
+                    <div class="settings-option"><input type="checkbox" id="webSearchToggle"><label for="webSearchToggle">Enable Web Search</label></div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Theme</h3>
+                    <button id="toggleThemeBtn" class="settings-button">Toggle Dark/Light Mode</button>
+                </div>
+            </div>
+            
+            <div class="settings-content" id="settings-tab-model">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Model Selection</h3>
+                    <div class="settings-option">
+                        <select id="modelSelector">
+                            <option value="llama3:8b">Llama 3 (8B)</option>
+                            <option value="llama3:70b">Llama 3 (70B)</option>
+                            <option value="claude:3-haiku">Claude 3 Haiku</option>
+                            <option value="claude:3-sonnet">Claude 3 Sonnet</option>
+                            <option value="claude:3-opus">Claude 3 Opus</option>
+                            <option value="gpt4">GPT-4</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Creativity (Temperature)</h3>
+                    <div class="slider-container">
+                        <input type="range" id="temperatureSlider" min="0" max="1" step="0.1" value="0.7">
+                        <span id="temperatureValue">0.7</span>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Model Management</h3>
+                    <button class="settings-button">Manage Model Versions</button>
+                </div>
+            </div>
+            
+            <div class="settings-content" id="settings-tab-security">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Compliance</h3>
+                    <div class="compliance-logos">
+                        <img src="https://via.placeholder.com/80x30?text=HIPAA" alt="HIPAA">
+                        <img src="https://via.placeholder.com/80x30?text=GDPR" alt="GDPR">
+                        <img src="https://via.placeholder.com/80x30?text=SOC2" alt="SOC2">
+                    </div>
+                    
+                    <div class="settings-option" style="margin-top: 1rem;">
+                        <label for="dataResidency" style="margin-left: 0; margin-right: 0.5rem; flex-shrink: 0;">Data Residency:</label>
+                        <select id="dataResidency">
+                            <option value="us">United States</option>
+                            <option value="eu">European Union</option>
+                            <option value="uk">United Kingdom</option>
+                            <option value="ca">Canada</option>
+                            <option value="au">Australia</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Access Control</h3>
+                    <button class="settings-button">Manage Users & Roles (RBAC)</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Auditing</h3>
+                    <button class="settings-button">View Audit Logs</button>
+                </div>
+            </div>
+            
+            <div class="settings-content" id="settings-tab-workflows">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Workflow Management</h3>
+                    <button class="settings-button">Create / Edit Workflows</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Approval Settings</h3>
+                    <button class="settings-button">Configure Approval Queues</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Domain Specific Enhancements</h3>
+                    <div class="settings-option"><input type="checkbox" id="medTermToggle"><label for="medTermToggle">Enable Medical Terminology Validation</label></div>
+                    <div class="settings-option"><input type="checkbox" id="equipSpecToggle"><label for="equipSpecToggle">Enable Equipment-Specific Analysis</label></div>
+                </div>
+            </div>
+            
+            <div class="settings-content" id="settings-tab-integrations">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">EHR / EMR Systems</h3>
+                    <button class="settings-button primary">Connect to EHR/EMR</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Enterprise Systems</h3>
+                    <button class="settings-button">Connect to SAP</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">API Access</h3>
+                    <button class="settings-button">Manage API Keys</button>
+                </div>
+            </div>
+            
+            <div class="settings-content" id="settings-tab-knowledge">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Knowledge Base Connection</h3>
+                    <div class="settings-option">
+                        <label for="kbEndpoint" style="margin-left:0; margin-right: 0.5rem;">Endpoint:</label>
+                        <input type="text" id="kbEndpoint" placeholder="https://kb.example.com/api">
+                    </div>
+                    <div class="settings-option"><input type="checkbox" id="ragToggle"><label for="ragToggle">Enable Retrieval-Augmented Generation (RAG)</label></div>
+                    <button class="settings-button primary" style="margin-top: 1rem;">Connect</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Document Library Settings</h3>
+                    <button class="settings-button">Configure Semantic Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- File Upload Modal (Initially Hidden) -->
+    <div class="file-upload-modal" id="fileUploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Upload File</h2>
+                <button class="close-modal" id="closeFileUploadModal">&times;</button>
+            </div>
+            
+            <div class="file-upload-area" id="dropArea">
+                <p class="file-upload-text">Drag & drop file or click to browse (PDF, DOCX, XLSX, DICOM, Images, Text...)</p>
+                <img src="" alt="Image Preview" class="file-preview" id="imagePreview">
+            </div>
+            
+            <div class="upload-options">
+                <h4>Processing Options</h4>
+                <div class="settings-option"><input type="checkbox" id="enableOcr" checked><label for="enableOcr">Enable OCR</label></div>
+                <div class="settings-option"><input type="checkbox" id="extractTables" checked><label for="extractTables">Extract Tables</label></div>
+                <div class="settings-option"><input type="checkbox" id="segmentDoc"><label for="segmentDoc">Segment Document Sections</label></div>
+                <div class="settings-option">
+                    <label for="workflowSelect" style="margin-left:0; margin-right: 0.5rem;">Apply Workflow:</label>
+                    <select id="workflowSelect">
+                        <option value="default">Default Processing</option>
+                        <option value="medical">Medical Document Analysis</option>
+                        <option value="financial">Financial Document Analysis</option>
+                        <option value="legal">Legal Document Analysis</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="file-upload-buttons">
+                <button type="button" class="cancel-button" id="cancelUpload">Cancel</button>
+                <button type="button" class="upload-button" id="confirmUpload" disabled>Upload</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- History Edit Modal (Initially Hidden) -->
+    <div class="file-upload-modal" id="historyEditModal" style="align-items: flex-start; padding-top: 5vh;">
+        <div class="modal-content" style="max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Conversation History</h2>
+                <button class="close-modal" id="closeHistoryEditModal">&times;</button>
+            </div>
+            
+            <div id="historyEditContent" style="flex-grow: 1; overflow-y: auto; border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; background: var(--bg-primary);"></div>
+            
+            <div style="margin-top: 1rem; text-align: right;">
+                <button class="settings-button" id="closeHistoryEditBtn">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Batch Processing Panel (Initially Hidden) -->
+    <div class="batch-processing-panel" id="batchProcessingPanel">
+        <div class="batch-panel-header">
+            <h3 class="batch-panel-title">Batch Processing Queue</h3>
+            <div class="batch-panel-actions">
+                <button class="settings-button" id="newBatchBtn">New Batch</button>
+                <button class="close-settings" id="closeBatchPanelBtn">&times;</button>
+            </div>
+        </div>
+        
+        <div class="batch-queue-list" id="batchQueueList">
+            <div class="placeholder-text">No batch jobs in queue.</div>
+        </div>
+    </div>
+    
+    <!-- Notepad Container (Initially Hidden) -->
+    <div class="notepad-container" id="notepadContainer">
+        <div class="notepad-header">
+            <h3 class="notepad-title">Notepad</h3>
+            <div class="notepad-actions">
+                <button type="button" class="notepad-action" id="notepadClearBtn" title="Clear notepad"><span>&#128465;</span></button>
+                <button type="button" class="notepad-action" id="notepadCollapseBtn" title="Hide notepad"><span>&#10006;</span></button>
+            </div>
+        </div>
+        
+        <div class="notepad-content" id="notepadContent" contenteditable="true" spellcheck="true"></div>
+        
+        <div class="notepad-footer">
+            <div class="notepad-status" id="notepadStatus">Ready</div>
+            <div class="notepad-buttons">
+                <button type="button" class="notepad-footer-btn" id="notepadSaveBtn">Save</button>
+                <button type="button" class="notepad-footer-btn" id="notepadAskLLMBtn">Ask AI to edit</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Files -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
