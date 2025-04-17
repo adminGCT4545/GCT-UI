@@ -3,374 +3,349 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GCT Enterprise App Concept</title>
-    
+    <title>KYNSEY AI - Chat App Concept</title>
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <!-- CSS Files -->
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/modals.css">
     <link rel="stylesheet" href="css/utilities.css">
-    
-    <!-- External Libraries -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.10/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <link rel="stylesheet" href="css/templates.css">
+    <!-- JavaScript Files -->
+    <script src="js/utils/utils.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/components/conversations.js"></script>
+    <script src="js/components/settings.js"></script>
+    <script src="js/components/fileUpload.js"></script>
+    <script src="js/components/notepad.js"></script>
+    <script src="js/components/batchProcessing.js"></script>
+    <script src="js/components/dashboard.js"></script>
+    <script src="js/main.js"></script>
+    <!-- Placeholder for potential charting/annotation libraries -->
+    <style>
+        /* --- Base Styles (Keep existing styles from previous version) --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        :root { --bg-primary: #121212; --bg-secondary: #202124; --bg-tertiary: #292a2d; --text-primary: #ffffff; --text-secondary: #e8e8e8; --text-muted: #9aa0a6; --accent-primary: #0b84ff; --accent-hover: #005ec4; --border-color: #3d3d3e; --danger-color: #dc3545; --danger-hover: #a71d2a; --warning-color: #ffc107; --sidebar-width: 260px; --sidebar-collapsed-width: 60px; --right-panel-width: 350px; /* For Artifacts/Details */ }
+        body { height: 100vh; display: flex; background-color: var(--bg-primary); color: var(--text-primary); overflow: hidden; }
+
+        /* --- Sidebar Styles --- */
+        .sidebar { width: var(--sidebar-collapsed-width); background-color: var(--bg-secondary); padding: 1rem 0; display: flex; flex-direction: column; box-shadow: 1px 0 0 rgba(255, 255, 255, 0.08); flex-shrink: 0; transition: width 0.3s ease; overflow: hidden; }
+        .sidebar.expanded { width: var(--sidebar-width); align-items: flex-start; }
+        .sidebar-header { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 0.75rem; margin-bottom: 1rem; flex-shrink: 0; }
+        .sidebar-button, .sidebar-item { background: transparent; border: none; color: var(--text-primary); padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0.8; transition: opacity 0.2s ease, background-color 0.2s ease; width: 44px; height: 44px; flex-shrink: 0; margin-left: 8px; }
+        .sidebar-button:hover, .sidebar-item:hover { opacity: 1; background-color: rgba(255, 255, 255, 0.1); }
+        .sidebar-button i, .sidebar-button span, .sidebar-item i, .sidebar-item span { font-size: 1.2rem; margin-right: 0; transition: margin-right 0.3s ease; }
+        .sidebar-item-text { display: none; margin-left: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; flex-grow: 1; }
+        .sidebar.expanded .sidebar-button, .sidebar.expanded .sidebar-item { width: calc(100% - 16px); justify-content: flex-start; margin-left: 8px; margin-right: 8px; }
+        .sidebar.expanded .sidebar-item-text { display: inline; }
+        .sidebar.expanded .sidebar-button i, .sidebar.expanded .sidebar-button span, .sidebar.expanded .sidebar-item i, .sidebar.expanded .sidebar-item span { margin-right: 0.75rem; }
+        #conversationList { flex-grow: 1; overflow-y: auto; width: 100%; padding: 0 8px; }
+        .sidebar-item { width: 100%; margin-bottom: 0.25rem; justify-content: flex-start; text-align: left; }
+        .sidebar-item.active { background-color: rgba(11, 132, 255, 0.2); }
+        .sidebar-section { padding: 0.5rem 8px; margin-top: 1rem; border-top: 1px solid var(--border-color); }
+        .sidebar-section-title { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 0.75rem; display: none; }
+        .sidebar.expanded .sidebar-section-title { display: block; }
+        .badge { background-color: var(--accent-primary); color: white; font-size: 0.7rem; padding: 2px 5px; border-radius: 8px; margin-left: 5px; font-weight: bold; }
+
+        /* --- Main Content Wrapper & Content Area --- */
+        .main-content-wrapper { flex: 1; display: flex; overflow: hidden; }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .main-content.dashboard-view { flex-direction: row; }
+
+        /* --- Header Styles --- */
+        .header { background-color: var(--bg-secondary); padding: 1rem 1.5rem; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .header-left { display: flex; align-items: center; }
+        .app-info { /* Existing */ }
+        .app-title { font-size: 1.2rem; font-weight: bold; }
+        .app-subtitle { font-size: 0.8rem; color: var(--text-muted); }
+        #conversationTitle { font-size: 1.1rem; font-weight: 500; color: var(--text-secondary); margin-left: 1.5rem; cursor: pointer; border-bottom: 1px dashed transparent; }
+        #conversationTitle:hover { border-bottom-color: var(--text-muted); }
+        #conversationTitleInput { font-size: 1.1rem; font-weight: 500; background-color: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.2rem 0.4rem; border-radius: 4px; margin-left: 1.5rem; display: none; }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        #notificationsBtn { background: none; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; position: relative; }
+        #notificationsBtn:hover { color: var(--text-primary); }
+        #notification-badge { position: absolute; top: -3px; right: -5px; background-color: var(--danger-color); color: white; font-size: 0.7rem; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-weight: bold; display: none; }
+        #viewModeToggle { background-color: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-color); padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+        #viewModeToggle:hover { background-color: var(--border-color); }
+        #userProfilePlaceholder { width: 32px; height: 32px; background-color: var(--accent-primary); border-radius: 50%; cursor: pointer; }
+
+        /* --- Chat Container & Messages --- */
+        .chat-container { flex: 1; padding: 1.5rem; overflow-y: auto; max-width: 1000px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; }
+        .message { margin-bottom: 1rem; padding: 0.8rem 1.2rem; border-radius: 1rem; max-width: 85%; clear: both; line-height: 1.5; word-wrap: break-word; position: relative; }
+        .message:hover .message-actions { opacity: 1; }
+        .user-message { background-color: var(--accent-primary); color: white; margin-left: auto; text-align: left; align-self: flex-end; border-bottom-right-radius: 0.25rem; }
+        .assistant-message { background-color: var(--bg-tertiary); color: var(--text-secondary); align-self: flex-start; border-bottom-left-radius: 0.25rem; }
+        .assistant-message.streaming::after { content: '▋'; display: inline-block; animation: blink 1s step-end infinite; margin-left: 2px; font-size: 1em; line-height: 1; vertical-align: baseline; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .assistant-message img, .user-message img { max-width: 100%; max-height: 300px; border-radius: 0.5rem; margin-top: 0.5rem; display: block; cursor: pointer; }
+        .user-message .file-placeholder { display: flex; align-items: center; gap: 0.5rem; background-color: rgba(255, 255, 255, 0.1); padding: 0.5rem 0.8rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.9rem; }
+        .user-message .file-placeholder span:first-child { font-size: 1.2rem; }
+
+        /* Markdown, Citations, Delete Button */
+        .assistant-message pre { background-color: var(--bg-primary); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.8rem 0; position: relative; }
+        .assistant-message pre code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9rem; color: var(--text-secondary); background: none; padding: 0; }
+        .assistant-message code:not(pre code) { background-color: rgba(255, 255, 255, 0.1); padding: 0.2em 0.4em; border-radius: 3px; font-size: 85%; }
+        .assistant-message ul, .assistant-message ol { margin-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+        .assistant-message li { margin-bottom: 0.25rem; }
+        .assistant-message blockquote { border-left: 3px solid var(--accent-primary); padding-left: 1rem; margin: 0.8rem 0; color: var(--text-muted); }
+        .assistant-message table { border-collapse: collapse; margin: 1rem 0; width: 100%; border: 1px solid var(--border-color); }
+        .assistant-message th, .assistant-message td { border: 1px solid var(--border-color); padding: 0.5rem 0.8rem; text-align: left; }
+        .assistant-message th { background-color: var(--bg-tertiary); font-weight: bold; }
+        .assistant-message a { color: var(--accent-primary); text-decoration: none; }
+        .assistant-message a:hover { text-decoration: underline; }
+        .copy-code-btn { position: absolute; top: 8px; right: 8px; background-color: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer; opacity: 0.6; transition: opacity 0.2s ease, color 0.2s ease; }
+        .assistant-message pre:hover .copy-code-btn { opacity: 1; }
+        .copy-code-btn:hover { color: var(--text-primary); }
+        .copy-code-btn.copied { color: lightgreen; }
+        .citation { display: inline-block; background-color: var(--bg-secondary); color: var(--accent-primary); font-size: 0.75rem; font-weight: bold; padding: 0.1rem 0.4rem; border-radius: 3px; margin-left: 0.2rem; cursor: pointer; border: 1px solid var(--border-color); }
+        .citation-source-list { margin-top: 0.8rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color); font-size: 0.85rem; }
+        .citation-source-list h4 { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+        .citation-source-list ul { margin: 0; padding: 0; list-style: none; }
+        .citation-source-list li { margin-bottom: 0.2rem; }
+        .delete-message-btn { position: absolute; top: 5px; right: -25px; background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 50%; width: 20px; height: 20px; font-size: 12px; line-height: 18px; text-align: center; cursor: pointer; opacity: 0; transition: opacity 0.2s ease, color 0.2s ease; z-index: 5; }
+        .user-message .delete-message-btn { left: -25px; right: auto; }
+        .delete-message-btn:hover { color: var(--danger-color); opacity: 1 !important; }
+        .message-actions { position: absolute; bottom: -15px; right: 10px; display: flex; gap: 5px; background: var(--bg-secondary); padding: 3px 6px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.2s ease; z-index: 6; }
+        .user-message .message-actions { left: 10px; right: auto; }
+        .message-action-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; }
+        .message-action-btn:hover { color: var(--text-primary); }
+        .confidence-score { font-size: 0.8em; color: var(--warning-color); margin-left: 5px; }
+
+        /* --- Input Container --- */
+        .input-container { background-color: var(--bg-secondary); padding: 1rem 1.5rem; box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.08); flex-shrink: 0; }
+        .input-wrapper { max-width: 1000px; margin: 0 auto; position: relative; }
+        .input-form { display: flex; gap: 0.75rem; align-items: flex-end; }
+        .input-actions { display: flex; gap: 0.5rem; align-items: flex-end; padding-bottom: 0.75rem; }
+        .input-action-button { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 0.5rem; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
+        .input-action-button:hover { background-color: var(--bg-tertiary); color: var(--text-secondary); }
+        .input-action-button span { font-size: 1.1rem; }
+        .message-input { flex: 1; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-size: 1rem; resize: none; background-color: var(--bg-primary); color: var(--text-primary); max-height: 150px; overflow-y: auto; line-height: 1.4; }
+        .message-input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 1px var(--accent-primary); }
+        .send-button { padding: 0.75rem 1.5rem; background-color: var(--accent-primary); color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 1rem; transition: background-color 0.2s ease, opacity 0.2s ease; align-self: flex-end; height: calc(1.5rem + 1.4em); }
+        .send-button:hover { background-color: var(--accent-hover); }
+        .send-button:disabled { background-color: var(--border-color); opacity: 0.6; cursor: not-allowed; }
+
+        /* File Upload Modal */
+        .file-upload-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: none; justify-content: center; align-items: center; z-index: 1001; backdrop-filter: blur(5px); }
+        .file-upload-modal.active { display: flex; }
+        .modal-content { background-color: var(--bg-secondary); padding: 2rem; border-radius: 0.5rem; width: 90%; max-width: 600px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
+        .file-upload-buttons { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <div class="sidebar expanded" id="sidebar">
-            <div class="sidebar-header">
-                <button class="sidebar-button" id="newChatBtn" title="New Chat"><span>+</span> <span class="sidebar-item-text">New Chat</span></button>
-                <button class="sidebar-button" id="collapseToggleBtn" title="Collapse Menu"><span>&lt;</span></button>
-            </div>
-            <div id="conversationList"></div>
-            
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Workflows</div>
-                <button class="sidebar-button" id="approvalQueueBtn" title="Approval Queue"><span>&#128204;</span> <span class="sidebar-item-text">Approvals <span class="badge">3</span></span></button>
-                <button class="sidebar-button" id="batchProcessingToggleBtn" title="Batch Processing"><span>&#128230;</span> <span class="sidebar-item-text">Batch Jobs</span></button>
-            </div>
-            
-            <div class="sidebar-section">
-                <div class="sidebar-section-title">Knowledge</div>
-                <button class="sidebar-button" id="docLibraryBtn" title="Document Library"><span>&#128193;</span> <span class="sidebar-item-text">Doc Library</span></button>
-            </div>
-            
-            <div class="sidebar-footer">
-                <button class="sidebar-button" id="settingsBtn" title="Settings"><span>&#9881;</span> <span class="sidebar-item-text">Settings</span></button>
-            </div>
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <button id="collapseToggleBtn" class="sidebar-button" title="Expand Menu"><span>&gt;</span></button>
         </div>
+        <button id="newChatBtn" class="sidebar-item" title="New Chat">
+            <span>+</span>
+            <span class="sidebar-item-text">New Chat</span>
+        </button>
+        <div id="conversationList"></div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Tools</div>
+            <button id="settingsBtn" class="sidebar-item" title="Settings">
+                <span>⚙️</span>
+                <span class="sidebar-item-text">Settings</span>
+            </button>
+        </div>
+    </div>
 
-        <!-- Main Content Wrapper -->
-        <div class="main-content-wrapper">
-            <div class="main-content" id="mainContent">
-                <!-- Header -->
-                <header class="header">
-                    <div class="header-left">
-                        <h1 class="app-title">GCT Enterprise</h1>
-                        <p class="app-subtitle">AI Assistant</p>
+    <!-- Main Content -->
+    <div class="main-content-wrapper">
+        <div id="mainContent" class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <div class="app-info">
+                        <div class="app-title">KYNSEY AI</div>
+                        <div class="app-subtitle">Chat App Concept</div>
                     </div>
-                    <div class="header-right">
-                        <h2 id="conversationTitle">New Conversation</h2>
-                        <input type="text" id="conversationTitleInput" placeholder="Conversation Title">
-                        <button id="viewModeToggle" class="settings-button">Dashboard View</button>
-                        <div id="notification-badge">0</div>
+                    <div id="conversationTitle">New Conversation</div>
+                    <input type="text" id="conversationTitleInput" placeholder="Conversation Title">
+                </div>
+                <div class="header-right">
+                    <button id="viewEditHistoryBtn" title="View/Edit History">
+                        <span>📝</span>
+                    </button>
+                    <button id="notificationsBtn" title="Notifications">
+                        <span>🔔</span>
+                        <div id="notification-badge">3</div>
+                    </button>
+                    <button id="viewModeToggle">Dashboard View</button>
+                    <div id="userProfilePlaceholder" title="User Profile"></div>
+                </div>
+            </div>
+
+            <!-- Chat Container -->
+            <div id="chatContainer" class="chat-container"></div>
+
+            <!-- Analysis Dashboard -->
+            <div id="analysisDashboard" class="analysis-dashboard">
+                <div class="dashboard-section">
+                    <div class="dashboard-section-title">Document Analysis</div>
+                    <div id="documentViewerPlaceholder">
+                        <span>No document loaded. Upload one.</span>
                     </div>
-                </header>
-                
-                <!-- Chat Container -->
-                <main class="chat-container" id="chatContainer"></main>
-                
-                <!-- Input Container -->
-                <div class="input-container">
-                    <form id="messageForm" class="input-wrapper">
+                </div>
+            </div>
+
+            <!-- Input Container -->
+            <div class="input-container" id="inputContainer">
+                <div class="input-wrapper">
+                    <div class="templates-popup" id="templatesPopup"></div>
+                    <form class="input-form" id="chatForm">
                         <div class="input-actions">
                             <button type="button" class="input-action-button" id="templateBtn" title="Prompt Templates"><span>&#128220;</span></button>
                             <button type="button" class="input-action-button" id="uploadFileBtn" title="Upload File"><span>&#128206;</span></button>
+                            <!-- Notepad Toggle Button (NEW) -->
                             <button type="button" class="input-action-button" id="notepadToggleBtn" title="Toggle Notepad"><span>&#128221;</span></button>
-                            <input type="file" id="fileInput" accept="image/*,application/pdf,.txt,.csv,.json,.md,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/dicom,.dcm">
+                            <!-- Hidden file input -->
+                            <input type="file" id="fileInput" accept="image/*,application/pdf,.txt,.csv,.json,.md,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/dicom,.dcm" style="display: none;">
                         </div>
-                        <textarea class="message-input" id="messageInput" placeholder="Ask about the document or use /note ..." rows="1"></textarea>
-                        <button type="button" class="send-button" id="sendButton" disabled>Send</button>
+                        <textarea class="message-input" id="messageInput" placeholder="Ask a question or use /note ..." rows="1"></textarea>
+                        <button type="submit" class="send-button" id="sendButton" disabled>Send</button>
                     </form>
                 </div>
-                
-                <!-- Multimodal Analysis Dashboard (Initially Hidden) -->
-                <div class="analysis-dashboard" id="analysisDashboard">
-                    <div class="dashboard-section">
-                        <h3 class="dashboard-section-title">Document Viewer</h3>
-                        <div id="documentViewerPlaceholder">
-                            <div id="annotationToolbar">
-                                <button class="tool-btn">Highlight</button>
-                                <button class="tool-btn">Comment</button>
-                                <button class="tool-btn">Draw</button>
-                            </div>
-                            <span>No document loaded. Upload one.</span>
-                        </div>
-                    </div>
-                    
-                    <div class="dashboard-section">
-                        <h3 class="dashboard-section-title">Detected Entities & Analysis</h3>
-                        <div id="entityHighlightPlaceholder">
-                            <span>Entity extraction will appear here after document analysis.</span>
-                        </div>
-                    </div>
-                    
-                    <div class="dashboard-section">
-                        <h3 class="dashboard-section-title">Advanced Analytics</h3>
-                        <div id="timeSeriesChartPlaceholder">Time-Series Visualization</div>
-                        <div id="anomalyVizPlaceholder">Anomaly Detection</div>
-                        <div id="predictiveVizPlaceholder">Predictive Analysis</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Right Panel (Initially Hidden) -->
-            <div class="right-panel" id="rightPanel">
-                <h3 style="color: var(--text-muted); text-align: center; margin-bottom: 1rem;">Details & Artifacts</h3>
             </div>
         </div>
+
+        <!-- Right Panel (Artifacts/Details) -->
+        <div id="rightPanel" class="right-panel"></div>
     </div>
-    
-    <!-- Templates Popup (Initially Hidden) -->
-    <div class="templates-popup" id="templatesPopup">
-        <div class="template-item">Analyze this document</div>
-        <div class="template-item">Summarize key points</div>
-        <div class="template-item">Extract data from this table</div>
-        <div class="template-item">Compare with previous version</div>
-        <div class="template-item">Generate report</div>
-    </div>
-    
-    <!-- Settings Panel (Initially Hidden) -->
-    <div class="settings-panel" id="settingsPanel">
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel">
         <div class="settings-header">
-            <h2 class="settings-title">Settings & Configuration</h2>
-            <button class="close-settings" id="closeSettings">&times;</button>
+            <div class="settings-title">Settings</div>
+            <button id="closeSettingsBtn" class="close-settings">&times;</button>
         </div>
-        
         <div class="settings-tabs">
-            <button class="settings-tab active" data-tab="general">General</button>
-            <button class="settings-tab" data-tab="model">Model</button>
-            <button class="settings-tab" data-tab="security">Security</button>
-            <button class="settings-tab" data-tab="workflows">Workflows</button>
-            <button class="settings-tab" data-tab="integrations">Integrations</button>
-            <button class="settings-tab" data-tab="knowledge">Knowledge</button>
+            <div class="settings-tab active" data-tab="general">General</div>
+            <div class="settings-tab" data-tab="model">Model</div>
+            <div class="settings-tab" data-tab="account">Account</div>
         </div>
-        
         <div class="settings-content-wrapper">
-            <div class="settings-content active" id="settings-tab-general">
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Conversation</h3>
-                    <button id="viewEditHistoryBtn" class="settings-button">View / Edit History</button>
-                    <button id="clearConversationBtn" class="settings-button danger">Clear Conversation</button>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Response Style</h3>
-                    <div class="settings-option"><input type="radio" id="professionalStyle" name="responseStyle" value="professional"><label for="professionalStyle">Professional</label></div>
-                    <div class="settings-option"><input type="radio" id="conciseStyle" name="responseStyle" value="concise"><label for="conciseStyle">Concise</label></div>
-                    <div class="settings-option"><input type="radio" id="normalStyle" name="responseStyle" value="normal" checked><label for="normalStyle">Normal</label></div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Advanced Modes</h3>
-                    <div class="settings-option"><input type="checkbox" id="thinkingModeToggle"><label for="thinkingModeToggle">Enable Extended Reasoning</label></div>
-                    <div class="settings-option"><input type="checkbox" id="webSearchToggle"><label for="webSearchToggle">Enable Web Search</label></div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Theme</h3>
-                    <button id="toggleThemeBtn" class="settings-button">Toggle Dark/Light Mode</button>
-                </div>
-            </div>
-            
-            <div class="settings-content" id="settings-tab-model">
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Model Selection</h3>
-                    <div class="settings-option">
-                        <select id="modelSelector">
-                            <option value="llama3:8b">Llama 3 (8B)</option>
-                            <option value="llama3:70b">Llama 3 (70B)</option>
-                            <option value="claude:3-haiku">Claude 3 Haiku</option>
-                            <option value="claude:3-sonnet">Claude 3 Sonnet</option>
-                            <option value="claude:3-opus">Claude 3 Opus</option>
-                            <option value="gpt4">GPT-4</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Creativity (Temperature)</h3>
-                    <div class="slider-container">
-                        <input type="range" id="temperatureSlider" min="0" max="1" step="0.1" value="0.7">
-                        <span id="temperatureValue">0.7</span>
-                    </div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Model Management</h3>
-                    <button class="settings-button">Manage Model Versions</button>
-                </div>
-            </div>
-            
-            <div class="settings-content" id="settings-tab-security">
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Compliance</h3>
-                    <div class="compliance-logos">
-                        <img src="https://via.placeholder.com/80x30?text=HIPAA" alt="HIPAA">
-                        <img src="https://via.placeholder.com/80x30?text=GDPR" alt="GDPR">
-                        <img src="https://via.placeholder.com/80x30?text=SOC2" alt="SOC2">
-                    </div>
-                    
-                    <div class="settings-option" style="margin-top: 1rem;">
-                        <label for="dataResidency" style="margin-left: 0; margin-right: 0.5rem; flex-shrink: 0;">Data Residency:</label>
-                        <select id="dataResidency">
-                            <option value="us">United States</option>
-                            <option value="eu">European Union</option>
-                            <option value="uk">United Kingdom</option>
-                            <option value="ca">Canada</option>
-                            <option value="au">Australia</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Access Control</h3>
-                    <button class="settings-button">Manage Users & Roles (RBAC)</button>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Auditing</h3>
-                    <button class="settings-button">View Audit Logs</button>
-                </div>
-            </div>
-            
-            <div class="settings-content" id="settings-tab-workflows">
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Workflow Management</h3>
-                    <button class="settings-button">Create / Edit Workflows</button>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Approval Settings</h3>
-                    <button class="settings-button">Configure Approval Queues</button>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Domain Specific Enhancements</h3>
-                    <div class="settings-option"><input type="checkbox" id="medTermToggle"><label for="medTermToggle">Enable Medical Terminology Validation</label></div>
-                    <div class="settings-option"><input type="checkbox" id="equipSpecToggle"><label for="equipSpecToggle">Enable Equipment-Specific Analysis</label></div>
-                </div>
-            </div>
-            
-            <div class="settings-content" id="settings-tab-integrations">
-                <div class="settings-section">
-                    <h3 class="settings-section-title">EHR / EMR Systems</h3>
-                    <button class="settings-button primary">Connect to EHR/EMR</button>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Enterprise Systems</h3>
-                    <button class="settings-button">Connect to SAP</button>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">API Access</h3>
-                    <button class="settings-button">Manage API Keys</button>
-                </div>
-            </div>
-            
-            <div class="settings-content" id="settings-tab-knowledge">
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Knowledge Base Connection</h3>
-                    <div class="settings-option">
-                        <label for="kbEndpoint" style="margin-left:0; margin-right: 0.5rem;">Endpoint:</label>
-                        <input type="text" id="kbEndpoint" placeholder="https://kb.example.com/api">
-                    </div>
-                    <div class="settings-option"><input type="checkbox" id="ragToggle"><label for="ragToggle">Enable Retrieval-Augmented Generation (RAG)</label></div>
-                    <button class="settings-button primary" style="margin-top: 1rem;">Connect</button>
-                </div>
-                
-                <div class="settings-section">
-                    <h3 class="settings-section-title">Document Library Settings</h3>
-                    <button class="settings-button">Configure Semantic Search</button>
-                </div>
-            </div>
+            <div id="generalSettings" class="settings-content active"></div>
+            <div id="modelSettings" class="settings-content"></div>
+            <div id="accountSettings" class="settings-content"></div>
         </div>
     </div>
-    
-    <!-- File Upload Modal (Initially Hidden) -->
-    <div class="file-upload-modal" id="fileUploadModal">
+
+    <!-- File Upload Modal -->
+    <div id="fileUploadModal" class="file-upload-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Upload File</h2>
-                <button class="close-modal" id="closeFileUploadModal">&times;</button>
+                <div class="modal-title">Upload File</div>
+                <button id="closeFileUploadBtn" class="close-modal">&times;</button>
             </div>
-            
-            <div class="file-upload-area" id="dropArea">
-                <p class="file-upload-text">Drag & drop file or click to browse (PDF, DOCX, XLSX, DICOM, Images, Text...)</p>
-                <img src="" alt="Image Preview" class="file-preview" id="imagePreview">
+            <div id="fileUploadArea" class="file-upload-area">
+                <div class="file-upload-text">Drag & drop a file here, or click to select</div>
+                <input type="file" id="fileInput" style="display: none;">
             </div>
-            
-            <div class="upload-options">
-                <h4>Processing Options</h4>
-                <div class="settings-option"><input type="checkbox" id="enableOcr" checked><label for="enableOcr">Enable OCR</label></div>
-                <div class="settings-option"><input type="checkbox" id="extractTables" checked><label for="extractTables">Extract Tables</label></div>
-                <div class="settings-option"><input type="checkbox" id="segmentDoc"><label for="segmentDoc">Segment Document Sections</label></div>
-                <div class="settings-option">
-                    <label for="workflowSelect" style="margin-left:0; margin-right: 0.5rem;">Apply Workflow:</label>
-                    <select id="workflowSelect">
-                        <option value="default">Default Processing</option>
-                        <option value="medical">Medical Document Analysis</option>
-                        <option value="financial">Financial Document Analysis</option>
-                        <option value="legal">Legal Document Analysis</option>
-                    </select>
-                </div>
-            </div>
-            
             <div class="file-upload-buttons">
-                <button type="button" class="cancel-button" id="cancelUpload">Cancel</button>
-                <button type="button" class="upload-button" id="confirmUpload" disabled>Upload</button>
+                <button id="cancelUploadBtn" class="settings-button">Cancel</button>
+                <button id="confirmUploadBtn" class="settings-button primary" disabled>Upload</button>
             </div>
         </div>
     </div>
-    
-    <!-- History Edit Modal (Initially Hidden) -->
-    <div class="file-upload-modal" id="historyEditModal" style="align-items: flex-start; padding-top: 5vh;">
-        <div class="modal-content" style="max-width: 700px; max-height: 80vh; display: flex; flex-direction: column;">
+
+    <!-- History Edit Modal -->
+    <div id="historyEditModal" class="file-upload-modal">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Edit Conversation History</h2>
-                <button class="close-modal" id="closeHistoryEditModal">&times;</button>
+                <div class="modal-title">View/Edit Conversation History</div>
+                <button class="close-modal">&times;</button>
             </div>
+            <div id="historyEditContent" style="max-height: 400px; overflow-y: auto;"></div>
+            <div class="file-upload-buttons">
+                <button id="closeHistoryBtn" class="settings-button primary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Templates Section -->
+    <script>
+        /**
+         * Renders the prompt templates popup content.
+         */
+        window.renderTemplatesPopup = function() {
+            const templatesPopup = document.getElementById('templatesPopup');
+            const messageInput = document.getElementById('messageInput');
+            if (!templatesPopup || !messageInput) return;
             
-            <div id="historyEditContent" style="flex-grow: 1; overflow-y: auto; border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; background: var(--bg-primary);"></div>
+            templatesPopup.innerHTML = ''; // Clear previous items
+            const promptTemplates = [
+                { name: "Summarize Text", prompt: "Please summarize the following text:\n\n" },
+                { name: "Explain Code", prompt: "Explain this code snippet:\n\n```\n[Your Code Here]\n```\n" },
+                { name: "Translate to French", prompt: "Translate the following text to French:\n\n" },
+                { name: "Brainstorm Ideas", prompt: "Brainstorm ideas for:\n\n" },
+                { name: "Write Email", prompt: "Write a professional email about:\n\nSubject: [Subject]\n\nBody:\n" },
+                { name: "Add to Notepad", prompt: "/note " }, // Example for /note command
+            ];
+            promptTemplates.forEach(template => {
+                const item = document.createElement('div');
+                item.className = 'template-item';
+                // Show name and beginning of prompt
+                item.innerHTML = `<strong>${template.name}</strong> ${template.prompt.substring(0, 50)}...`;
+                item.onclick = () => {
+                    messageInput.value = template.prompt; // Set input value
+                    templatesPopup.classList.remove('active'); // Close popup
+                    messageInput.focus(); // Focus input
+                    
+                    // Use the autoResizeTextarea function from utils.js
+                    if (window.utils && typeof window.utils.autoResizeTextarea === 'function') {
+                        window.utils.autoResizeTextarea(messageInput);
+                    }
+                    
+                    // Update send button state
+                    updateButtonStates();
+                    
+                    // Move cursor to end for easier typing
+                    messageInput.selectionStart = messageInput.selectionEnd = messageInput.value.length;
+                };
+                templatesPopup.appendChild(item);
+            });
+        }
+
+        /**
+         * Updates button states based on input content
+         */
+        function updateButtonStates() {
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
             
-            <div style="margin-top: 1rem; text-align: right;">
-                <button class="settings-button" id="closeHistoryEditBtn">Close</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Batch Processing Panel (Initially Hidden) -->
-    <div class="batch-processing-panel" id="batchProcessingPanel">
-        <div class="batch-panel-header">
-            <h3 class="batch-panel-title">Batch Processing Queue</h3>
-            <div class="batch-panel-actions">
-                <button class="settings-button" id="newBatchBtn">New Batch</button>
-                <button class="close-settings" id="closeBatchPanelBtn">&times;</button>
-            </div>
-        </div>
-        
-        <div class="batch-queue-list" id="batchQueueList">
-            <div class="placeholder-text">No batch jobs in queue.</div>
-        </div>
-    </div>
-    
-    <!-- Notepad Container (Initially Hidden) -->
-    <div class="notepad-container" id="notepadContainer">
-        <div class="notepad-header">
-            <h3 class="notepad-title">Notepad</h3>
-            <div class="notepad-actions">
-                <button type="button" class="notepad-action" id="notepadClearBtn" title="Clear notepad"><span>&#128465;</span></button>
-                <button type="button" class="notepad-action" id="notepadCollapseBtn" title="Hide notepad"><span>&#10006;</span></button>
-            </div>
-        </div>
-        
-        <div class="notepad-content" id="notepadContent" contenteditable="true" spellcheck="true"></div>
-        
-        <div class="notepad-footer">
-            <div class="notepad-status" id="notepadStatus">Ready</div>
-            <div class="notepad-buttons">
-                <button type="button" class="notepad-footer-btn" id="notepadSaveBtn">Save</button>
-                <button type="button" class="notepad-footer-btn" id="notepadAskLLMBtn">Ask AI to edit</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- JavaScript Files -->
-    <script type="module" src="js/main.js"></script>
+            if (messageInput && sendButton) {
+                sendButton.disabled = messageInput.value.trim() === '';
+            }
+        }
+
+        /**
+         * Initialize the application
+         */
+        function initializeApp() {
+            console.log('Initializing application...');
+            
+            // Initialize message input event listeners
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                // Auto-resize textarea as user types
+                messageInput.addEventListener('input', function() {
+                    if (window.utils && typeof window.utils.autoResizeTextarea === 'function') {
+                        window.utils.autoResizeTextarea(this);
+                    }
+                    updateButtonStates();
+                });
+            }
+        }
+
+        // Start the application once the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
 </body>
 </html>
