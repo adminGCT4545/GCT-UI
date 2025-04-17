@@ -1,20 +1,25 @@
 /**
- * UI Module
+ * KYNSEY AI - UI Module
  * 
  * Handles general UI functionality and interactions that don't belong to specific components.
  */
+
+// Create a global UI object
+window.ui = {};
 
 // DOM Elements
 let sidebar;
 let collapseToggleBtn;
 let mainContent;
 let viewModeToggle;
-let currentViewMode = 'chat';
+window.ui.currentViewMode = 'chat';
 
 /**
  * Initialize UI components and event listeners
  */
-export function initializeUI() {
+window.ui.initializeUI = function() {
+    console.log('UI initializeUI function called');
+    
     // Get DOM elements
     sidebar = document.getElementById('sidebar');
     collapseToggleBtn = document.getElementById('collapseToggleBtn');
@@ -22,7 +27,9 @@ export function initializeUI() {
     viewModeToggle = document.getElementById('viewModeToggle');
     
     // Set up event listeners
+    console.log('About to call setupEventListeners');
     setupEventListeners();
+    console.log('setupEventListeners completed');
     
     // Initialize UI state
     initializeUIState();
@@ -42,6 +49,42 @@ function setupEventListeners() {
         viewModeToggle.addEventListener('click', toggleViewMode);
     }
     
+    // Template button
+    const templateBtn = document.getElementById('templateBtn');
+    const templatesPopup = document.getElementById('templatesPopup');
+    if (templateBtn && templatesPopup) {
+        console.log('Setting up template button click listener');
+        templateBtn.addEventListener('click', () => {
+            console.log('Template button clicked');
+            templatesPopup.classList.toggle('active');
+            console.log('Templates popup active class toggled:', templatesPopup.classList.contains('active'));
+            
+            // Check if renderTemplatesPopup function exists
+            if (typeof window.renderTemplatesPopup === 'function') {
+                console.log('Calling renderTemplatesPopup function');
+                window.renderTemplatesPopup();
+            } else {
+                console.error('renderTemplatesPopup function not found');
+            }
+        });
+    } else {
+        console.error('Template button or templates popup element not found', {
+            templateBtn: !!templateBtn,
+            templatesPopup: !!templatesPopup
+        });
+    }
+    
+    // View/Edit History button
+    const viewEditHistoryBtn = document.getElementById('viewEditHistoryBtn');
+    if (viewEditHistoryBtn) {
+        viewEditHistoryBtn.addEventListener('click', () => {
+            if (typeof window.conversations !== 'undefined' && 
+                typeof window.conversations.showHistoryEditModal === 'function') {
+                window.conversations.showHistoryEditModal();
+            }
+        });
+    }
+    
     // Close panels when clicking outside
     document.addEventListener('click', handleOutsideClicks);
     
@@ -52,48 +95,80 @@ function setupEventListeners() {
     window.addEventListener('resize', handleWindowResize);
 }
 
+
 /**
  * Initialize UI state based on saved preferences or defaults
  */
 function initializeUIState() {
-    // Set sidebar state (expanded/collapsed)
-    const sidebarState = localStorage.getItem('sidebarState') || 'expanded';
-    if (sidebarState === 'collapsed' && sidebar) {
+    // Set sidebar state (expanded/collapsed) - default to collapsed in new design
+    const sidebarState = localStorage.getItem('sidebarState') || 'collapsed';
+    if (sidebarState === 'expanded' && sidebar) {
+        sidebar.classList.add('expanded');
+        if (collapseToggleBtn) {
+            collapseToggleBtn.innerHTML = '<span>&lt;&lt;</span>';
+            collapseToggleBtn.title = "Collapse Menu";
+        }
+    } else if (sidebar) {
         sidebar.classList.remove('expanded');
+        if (collapseToggleBtn) {
+            collapseToggleBtn.innerHTML = '<span>&gt;</span>';
+            collapseToggleBtn.title = "Expand Menu";
+        }
     }
     
     // Set view mode (chat/dashboard)
-    currentViewMode = localStorage.getItem('viewMode') || 'chat';
+    window.ui.currentViewMode = localStorage.getItem('viewMode') || 'chat';
     updateViewMode();
-    
-    // Apply any saved theme preferences
-    applyThemePreferences();
 }
 
 /**
  * Toggle sidebar between expanded and collapsed states
  */
 function toggleSidebar() {
-    if (!sidebar) return;
+    console.log('Toggle sidebar called');
+    
+    // Get sidebar element directly
+    sidebar = document.getElementById('sidebar');
+    
+    if (!sidebar) {
+        console.error('Sidebar element not found');
+        return;
+    }
+    
+    console.log('Sidebar element:', sidebar);
     
     const isExpanded = sidebar.classList.contains('expanded');
+    console.log('Sidebar is expanded:', isExpanded);
     
     if (isExpanded) {
+        console.log('Removing expanded class');
         sidebar.classList.remove('expanded');
         localStorage.setItem('sidebarState', 'collapsed');
+        if (collapseToggleBtn) {
+            collapseToggleBtn.innerHTML = '<span>&gt;</span>';
+            collapseToggleBtn.title = "Expand Menu";
+        }
     } else {
+        console.log('Adding expanded class');
         sidebar.classList.add('expanded');
         localStorage.setItem('sidebarState', 'expanded');
+        if (collapseToggleBtn) {
+            collapseToggleBtn.innerHTML = '<span>&lt;&lt;</span>';
+            collapseToggleBtn.title = "Collapse Menu";
+        }
     }
+    
+    console.log('Sidebar classList after toggle:', sidebar.classList);
+    console.log('Sidebar toggled, new state:', sidebar.classList.contains('expanded'));
 }
 
 /**
  * Toggle between chat view and dashboard view
  */
 function toggleViewMode() {
-    currentViewMode = currentViewMode === 'chat' ? 'dashboard' : 'chat';
+    window.ui.currentViewMode = window.ui.currentViewMode === 'chat' ? 'dashboard' : 'chat';
     updateViewMode();
-    localStorage.setItem('viewMode', currentViewMode);
+    localStorage.setItem('viewMode', window.ui.currentViewMode);
 }
 
 /**
@@ -106,7 +181,7 @@ function updateViewMode() {
     const inputContainer = document.querySelector('.input-container');
     const rightPanel = document.getElementById('rightPanel');
     
-    if (currentViewMode === 'chat') {
+    if (window.ui.currentViewMode === 'chat') {
         mainContent.classList.remove('dashboard-view');
         if (inputContainer) inputContainer.style.display = 'block';
         if (analysisDashboard) analysisDashboard.style.display = 'none';
@@ -136,7 +211,7 @@ function updateViewMode() {
  * Update the document viewer in dashboard mode
  */
 function updateDocumentViewer() {
-    if (currentViewMode !== 'dashboard') return;
+    if (window.ui.currentViewMode !== 'dashboard') return;
     
     const docViewer = document.getElementById('documentViewerPlaceholder');
     if (!docViewer) return;
@@ -188,8 +263,8 @@ function handleOutsideClicks(event) {
         !fileUploadModal.querySelector('.modal-content').contains(event.target)) {
         fileUploadModal.classList.remove('active');
         // Reset file upload state
-        if (typeof resetFileUpload === 'function') {
-            resetFileUpload();
+        if (typeof window.fileUpload !== 'undefined' && typeof window.fileUpload.resetFileUpload === 'function') {
+            window.fileUpload.resetFileUpload();
         }
     }
     
@@ -249,15 +324,15 @@ function handleWindowResize() {
 
 /**
  * Apply theme preferences (light/dark mode)
+ * Note: In the new design, dark theme is default and light theme is optional
  */
 function applyThemePreferences() {
-    const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme');
     
-    if (savedTheme === 'dark' || (savedTheme !== 'light' && prefersDarkMode)) {
-        document.body.classList.add('dark-theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
     } else {
-        document.body.classList.remove('dark-theme');
+        document.body.classList.remove('light-theme');
     }
 }
 
@@ -265,7 +340,7 @@ function applyThemePreferences() {
  * Update notification count
  * @param {number} count - The notification count to display
  */
-export function updateNotificationCount(count) {
+window.ui.updateNotificationCount = function(count) {
     const notificationBadge = document.getElementById('notification-badge');
     if (!notificationBadge) return;
     
@@ -280,14 +355,14 @@ export function updateNotificationCount(count) {
 /**
  * Toggle dark/light theme
  */
-export function toggleTheme() {
-    const isDarkTheme = document.body.classList.contains('dark-theme');
+window.ui.toggleTheme = function() {
+    const isLightTheme = document.body.classList.contains('light-theme');
     
-    if (isDarkTheme) {
-        document.body.classList.remove('dark-theme');
-        localStorage.setItem('theme', 'light');
-    } else {
-        document.body.classList.add('dark-theme');
+    if (isLightTheme) {
+        document.body.classList.remove('light-theme');
         localStorage.setItem('theme', 'dark');
+    } else {
+        document.body.classList.add('light-theme');
+        localStorage.setItem('theme', 'light');
     }
 }
