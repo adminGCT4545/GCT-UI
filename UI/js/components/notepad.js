@@ -1,90 +1,156 @@
 /**
  * Notepad Module
  * 
- * Handles notepad functionality for taking notes during conversations.
+ * Handles the notepad functionality for taking and organizing notes.
  */
 
+// Create a global notepad object
+window.notepad = {};
+
 // DOM Elements
-let notepadContainer;
 let notepadContent;
+let notepadContainer;
 let notepadToggleBtn;
-let notepadCollapseBtn;
-let notepadClearBtn;
-let notepadSaveBtn;
-let notepadAskLLMBtn;
-let notepadStatus;
 
 /**
  * Initialize notepad functionality
  */
-export function initializeNotepad() {
+window.notepad.initializeNotepad = function() {
     // Get DOM elements
+    notepadContent = document.createElement('div');
+    notepadContent.id = 'notepadContent';
+    notepadContent.className = 'notepad-content';
+    notepadContent.contentEditable = true;
+    notepadContent.spellcheck = false;
+    notepadContent.setAttribute('data-placeholder', 'Type your notes here... Use /note in chat or ask AI to edit.');
+    
+    // Create notepad container if it doesn't exist
     notepadContainer = document.getElementById('notepadContainer');
-    notepadContent = document.getElementById('notepadContent');
+    if (!notepadContainer) {
+        notepadContainer = document.createElement('div');
+        notepadContainer.id = 'notepadContainer';
+        notepadContainer.className = 'notepad-container';
+        notepadContainer.style.display = 'none';
+        
+        const notepadHeader = document.createElement('div');
+        notepadHeader.className = 'notepad-header';
+        
+        const notepadTitle = document.createElement('div');
+        notepadTitle.className = 'notepad-title';
+        notepadTitle.textContent = 'Notepad';
+        
+        const notepadActions = document.createElement('div');
+        notepadActions.className = 'notepad-actions';
+        
+        const trashNotepadBtn = document.createElement('button');
+        trashNotepadBtn.className = 'trash-notepad';
+        trashNotepadBtn.innerHTML = '🗑️';
+        trashNotepadBtn.title = 'Clear notepad';
+        trashNotepadBtn.onclick = clearNotepad;
+        
+        const closeNotepadBtn = document.createElement('button');
+        closeNotepadBtn.className = 'close-notepad';
+        closeNotepadBtn.innerHTML = '&times;';
+        closeNotepadBtn.title = 'Close notepad';
+        closeNotepadBtn.onclick = toggleNotepad;
+        
+        notepadActions.appendChild(trashNotepadBtn);
+        notepadActions.appendChild(closeNotepadBtn);
+        
+        notepadHeader.appendChild(notepadTitle);
+        notepadHeader.appendChild(notepadActions);
+        
+        // Create notepad footer
+        const notepadFooter = document.createElement('div');
+        notepadFooter.className = 'notepad-footer';
+        
+        const notepadStatus = document.createElement('div');
+        notepadStatus.className = 'notepad-status';
+        notepadStatus.textContent = 'Ready';
+        
+        const notepadButtons = document.createElement('div');
+        notepadButtons.className = 'notepad-buttons';
+        
+        const saveNotepadBtn = document.createElement('button');
+        saveNotepadBtn.className = 'save-notepad';
+        saveNotepadBtn.textContent = 'Save';
+        saveNotepadBtn.onclick = saveNotepadContent;
+        
+        const askAIBtn = document.createElement('button');
+        askAIBtn.className = 'ask-ai-edit';
+        askAIBtn.textContent = 'Ask AI to edit';
+        askAIBtn.onclick = askAIToEdit;
+        
+        notepadButtons.appendChild(saveNotepadBtn);
+        notepadButtons.appendChild(askAIBtn);
+        
+        notepadFooter.appendChild(notepadStatus);
+        notepadFooter.appendChild(notepadButtons);
+        
+        notepadContainer.appendChild(notepadHeader);
+        notepadContainer.appendChild(notepadContent);
+        notepadContainer.appendChild(notepadFooter);
+        
+        // Add to right panel
+        const rightPanel = document.getElementById('rightPanel');
+        if (rightPanel) {
+            rightPanel.appendChild(notepadContainer);
+        } else {
+            document.body.appendChild(notepadContainer);
+        }
+    }
+    
+    // Create notepad toggle button if it doesn't exist
     notepadToggleBtn = document.getElementById('notepadToggleBtn');
-    notepadCollapseBtn = document.getElementById('notepadCollapseBtn');
-    notepadClearBtn = document.getElementById('notepadClearBtn');
-    notepadSaveBtn = document.getElementById('notepadSaveBtn');
-    notepadAskLLMBtn = document.getElementById('notepadAskLLMBtn');
-    notepadStatus = document.getElementById('notepadStatus');
+    if (!notepadToggleBtn) {
+        notepadToggleBtn = document.createElement('button');
+        notepadToggleBtn.id = 'notepadToggleBtn';
+        notepadToggleBtn.className = 'input-action-button';
+        notepadToggleBtn.title = 'Toggle Notepad';
+        notepadToggleBtn.innerHTML = '<span>📝</span>';
+        notepadToggleBtn.onclick = toggleNotepad;
+        
+        // Add to input actions
+        const inputActions = document.querySelector('.input-actions');
+        if (inputActions) {
+            inputActions.appendChild(notepadToggleBtn);
+        }
+    }
     
     // Set up event listeners
     setupEventListeners();
     
-    // Make functions available globally for other modules
-    window.loadNotepadContent = loadNotepadContent;
-    window.addNoteFromChat = addNoteFromChat;
+    // Load saved notepad content
+    window.notepad.loadNotepadContent();
 }
 
 /**
  * Set up event listeners for notepad
  */
 function setupEventListeners() {
-    // Toggle notepad visibility
-    if (notepadToggleBtn) {
-        notepadToggleBtn.addEventListener('click', toggleNotepad);
-    }
-    
-    // Collapse notepad
-    if (notepadCollapseBtn) {
-        notepadCollapseBtn.addEventListener('click', () => {
-            notepadContainer.classList.remove('visible');
-        });
-    }
-    
-    // Clear notepad
-    if (notepadClearBtn) {
-        notepadClearBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to clear the notepad?')) {
-                notepadContent.innerHTML = '';
-                saveNotepadContent();
-                updateNotepadStatus('Cleared');
-            }
-        });
-    }
-    
-    // Save notepad content
-    if (notepadSaveBtn) {
-        notepadSaveBtn.addEventListener('click', () => {
-            saveNotepadContent();
-            updateNotepadStatus('Saved');
-        });
-    }
-    
-    // Ask AI to edit notepad
-    if (notepadAskLLMBtn) {
-        notepadAskLLMBtn.addEventListener('click', askAIToEditNotepad);
-    }
-    
-    // Auto-save on input
     if (notepadContent) {
-        notepadContent.addEventListener('input', () => {
-            // Debounce save to avoid saving on every keystroke
-            clearTimeout(notepadContent.saveTimeout);
-            notepadContent.saveTimeout = setTimeout(() => {
-                saveNotepadContent();
-                updateNotepadStatus('Auto-saved');
-            }, 2000);
+        // Save content on input
+        notepadContent.addEventListener('input', saveNotepadContent);
+        
+        // Handle keyboard shortcuts
+        notepadContent.addEventListener('keydown', (e) => {
+            // Ctrl+B for bold
+            if (e.key === 'b' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                document.execCommand('bold', false, null);
+            }
+            
+            // Ctrl+I for italic
+            if (e.key === 'i' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                document.execCommand('italic', false, null);
+            }
+            
+            // Ctrl+U for underline
+            if (e.key === 'u' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                document.execCommand('underline', false, null);
+            }
         });
     }
 }
@@ -93,163 +159,188 @@ function setupEventListeners() {
  * Toggle notepad visibility
  */
 function toggleNotepad() {
-    if (!notepadContainer) return;
+    console.log('Toggle notepad called');
     
-    const isVisible = notepadContainer.classList.contains('visible');
+    if (!notepadContainer) {
+        console.error('Notepad container not found');
+        return;
+    }
+    
+    const isVisible = notepadContainer.style.display !== 'none';
+    console.log('Notepad is visible:', isVisible);
     
     if (isVisible) {
-        notepadContainer.classList.remove('visible');
+        console.log('Hiding notepad');
+        notepadContainer.style.display = 'none';
     } else {
-        notepadContainer.classList.add('visible');
-        loadNotepadContent();
+        console.log('Showing notepad');
+        notepadContainer.style.display = 'block';
+        
+        // Make sure right panel is visible
+        const rightPanel = document.getElementById('rightPanel');
+        if (rightPanel) {
+            console.log('Making right panel visible');
+            rightPanel.classList.add('visible');
+        } else {
+            console.error('Right panel not found');
+        }
         
         // Focus notepad
         if (notepadContent) {
+            console.log('Focusing notepad content');
             notepadContent.focus();
+        } else {
+            console.error('Notepad content not found');
         }
     }
 }
 
 /**
- * Load notepad content from current conversation
+ * Save notepad content to localStorage
  */
-export function loadNotepadContent() {
+function saveNotepadContent() {
+    if (!notepadContent || !window.conversations || !window.conversations.currentConversationId) return;
+    
+    const content = notepadContent.innerHTML;
+    
+    // Save to conversation
+    if (window.conversations.conversations[window.conversations.currentConversationId]) {
+        window.conversations.conversations[window.conversations.currentConversationId].notepadContent = content;
+        
+        // Save conversations
+        localStorage.setItem('kynseyAiConversations', JSON.stringify(window.conversations.conversations));
+        
+        // Update status
+        updateNotepadStatus('Saved');
+        setTimeout(() => {
+            updateNotepadStatus('Ready');
+        }, 2000);
+    }
+}
+
+/**
+ * Clear notepad content
+ */
+function clearNotepad() {
     if (!notepadContent) return;
     
-    const currentConversationId = window.currentConversationId;
-    const conversations = window.conversations;
+    if (confirm('Are you sure you want to clear the notepad?')) {
+        notepadContent.innerHTML = '';
+        saveNotepadContent();
+        updateNotepadStatus('Cleared');
+        setTimeout(() => {
+            updateNotepadStatus('Ready');
+        }, 2000);
+    }
+}
+
+/**
+ * Ask AI to edit the notepad content
+ */
+function askAIToEdit() {
+    if (!notepadContent) return;
     
-    if (currentConversationId && conversations && conversations[currentConversationId]) {
-        const notepadText = conversations[currentConversationId].notepadContent || '';
-        notepadContent.innerHTML = notepadText;
+    const content = notepadContent.innerHTML;
+    
+    // In a real implementation, this would send the content to the AI
+    // For now, we'll just update the status
+    updateNotepadStatus('Asking AI...');
+    
+    // Simulate AI response
+    setTimeout(() => {
+        updateNotepadStatus('AI editing...');
+        
+        // Simulate AI editing
+        setTimeout(() => {
+            updateNotepadStatus('Ready');
+        }, 2000);
+    }, 1000);
+}
+
+/**
+ * Update the notepad status
+ * @param {string} status - The status text to display
+ */
+function updateNotepadStatus(status) {
+    const notepadStatus = document.querySelector('.notepad-status');
+    if (notepadStatus) {
+        notepadStatus.textContent = status;
+    }
+}
+
+/**
+ * Load notepad content from localStorage
+ */
+window.notepad.loadNotepadContent = function() {
+    if (!notepadContent || !window.conversations || !window.conversations.currentConversationId) return;
+    
+    // Get content from conversation
+    if (window.conversations.conversations[window.conversations.currentConversationId]) {
+        const content = window.conversations.conversations[window.conversations.currentConversationId].notepadContent || '';
+        notepadContent.innerHTML = content;
     } else {
         notepadContent.innerHTML = '';
     }
 }
 
 /**
- * Save notepad content to current conversation
+ * Add a note from chat
+ * @param {string} noteText - The note text to add
  */
-function saveNotepadContent() {
-    if (!notepadContent) return;
+window.notepad.addNoteFromChat = function(noteText) {
+    if (!notepadContent || !noteText) return;
     
-    const currentConversationId = window.currentConversationId;
-    const conversations = window.conversations;
+    // Format the note
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const formattedNote = `<p><strong>${timestamp}:</strong> ${noteText}</p>`;
     
-    if (currentConversationId && conversations && conversations[currentConversationId]) {
-        conversations[currentConversationId].notepadContent = notepadContent.innerHTML;
+    // Add to notepad
+    notepadContent.innerHTML += formattedNote;
+    
+    // Save notepad content
+    saveNotepadContent();
+    
+    // Show notepad
+    if (notepadContainer) {
+        notepadContainer.style.display = 'block';
         
-        // Save conversations if the function is available
-        if (typeof window.saveConversations === 'function') {
-            window.saveConversations();
-        } else {
-            localStorage.setItem('kynseyAiConversations', JSON.stringify(conversations));
+        // Make sure right panel is visible
+        const rightPanel = document.getElementById('rightPanel');
+        if (rightPanel) {
+            rightPanel.classList.add('visible');
         }
     }
 }
 
 /**
- * Add a note from chat to the notepad
- * @param {string} noteText - The note text to add
+ * Update notepad content from AI
+ * @param {string} newContentHtml - The new content HTML
+ * @param {boolean} highlightChanges - Whether to highlight changes
  */
-export function addNoteFromChat(noteText) {
-    if (!notepadContent || !noteText) return;
-    
-    // Show notepad if it's hidden
-    if (notepadContainer && !notepadContainer.classList.contains('visible')) {
-        notepadContainer.classList.add('visible');
-    }
-    
-    // Add the note with a timestamp
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const formattedNote = `<div><strong>${timestamp}:</strong> ${noteText}</div>`;
-    
-    // Append to existing content
-    notepadContent.innerHTML += formattedNote;
-    
-    // Save the updated content
-    saveNotepadContent();
-    
-    // Update status
-    updateNotepadStatus('Note added');
-}
-
-/**
- * Ask AI to edit or improve the notepad content
- */
-function askAIToEditNotepad() {
+window.notepad.updateNotepadFromAI = function(newContentHtml, highlightChanges = true) {
     if (!notepadContent) return;
     
-    const currentContent = notepadContent.innerHTML;
-    
-    if (!currentContent.trim()) {
-        updateNotepadStatus('Notepad is empty');
-        return;
+    if (highlightChanges) {
+        // In a real implementation, this would highlight the differences
+        // For now, we'll just add a highlight class to the new content
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const formattedContent = `<div class="ai-suggestion"><p><em>AI suggestion (${timestamp}):</em></p>${newContentHtml}</div>`;
+        notepadContent.innerHTML += formattedContent;
+    } else {
+        notepadContent.innerHTML = newContentHtml;
     }
     
-    // Update status
-    updateNotepadStatus('Asking AI to edit...');
+    // Save notepad content
+    saveNotepadContent();
     
-    // In a real implementation, this would call the AI API
-    // For now, simulate a response
-    setTimeout(() => {
-        // Get plain text content
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = currentContent;
-        const plainText = tempDiv.textContent;
+    // Show notepad
+    if (notepadContainer) {
+        notepadContainer.style.display = 'block';
         
-        // Simulate AI improving the content
-        const improvedContent = improveNotepadContent(plainText);
-        
-        // Update notepad
-        notepadContent.innerHTML = improvedContent;
-        
-        // Save the updated content
-        saveNotepadContent();
-        
-        // Update status
-        updateNotepadStatus('AI edit complete');
-    }, 1500);
-}
-
-/**
- * Simulate AI improving notepad content
- * @param {string} content - The original content
- * @returns {string} Improved content
- */
-function improveNotepadContent(content) {
-    // This is a simple simulation of AI improving the content
-    // In a real implementation, this would call an AI API
-    
-    // Add formatting
-    let improved = content
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/\n/g, '<br>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    // Add structure
-    improved = `<h3>Organized Notes</h3><p>${improved}</p>`;
-    
-    // Add a summary
-    improved += `<h3>Summary</h3><p>These notes cover key points from the conversation, including important details and action items.</p>`;
-    
-    return improved;
-}
-
-/**
- * Update the notepad status message
- * @param {string} message - The status message
- */
-function updateNotepadStatus(message) {
-    if (!notepadStatus) return;
-    
-    notepadStatus.textContent = message;
-    notepadStatus.style.opacity = '1';
-    
-    // Fade out after a delay
-    clearTimeout(notepadStatus.fadeTimeout);
-    notepadStatus.fadeTimeout = setTimeout(() => {
-        notepadStatus.style.opacity = '0.7';
-    }, 3000);
+        // Make sure right panel is visible
+        const rightPanel = document.getElementById('rightPanel');
+        if (rightPanel) {
+            rightPanel.classList.add('visible');
+        }
+    }
 }

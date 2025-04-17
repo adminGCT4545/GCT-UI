@@ -1,429 +1,207 @@
 /**
  * File Upload Module
  * 
- * Handles file upload functionality and file processing.
+ * Handles file upload functionality for the application.
  */
 
-import { getFileIcon } from '../utils/utils.js';
-import { renderArtifact } from './conversations.js';
+// Create a global fileUpload object
+window.fileUpload = {};
 
 // DOM Elements
 let fileUploadModal;
-let closeFileUploadModalBtn;
-let uploadFileBtn;
+let fileUploadArea;
 let fileInput;
-let dropArea;
-let imagePreview;
+let filePreview;
+let fileInfo;
 let confirmUploadBtn;
 let cancelUploadBtn;
-let enableOcrCheckbox;
-let extractTablesCheckbox;
-let segmentDocCheckbox;
-let workflowSelect;
+let uploadBtn;
 
 // State
-let selectedFile = null;
+let currentFile = null;
 
 /**
  * Initialize file upload functionality
  */
-export function initializeFileUpload() {
+window.fileUpload.initializeFileUpload = function() {
     // Get DOM elements
     fileUploadModal = document.getElementById('fileUploadModal');
-    closeFileUploadModalBtn = document.getElementById('closeFileUploadModal');
-    uploadFileBtn = document.getElementById('uploadFileBtn');
+    fileUploadArea = document.getElementById('fileUploadArea');
     fileInput = document.getElementById('fileInput');
-    dropArea = document.getElementById('dropArea');
-    imagePreview = document.getElementById('imagePreview');
-    confirmUploadBtn = document.getElementById('confirmUpload');
-    cancelUploadBtn = document.getElementById('cancelUpload');
-    enableOcrCheckbox = document.getElementById('enableOcr');
-    extractTablesCheckbox = document.getElementById('extractTables');
-    segmentDocCheckbox = document.getElementById('segmentDoc');
-    workflowSelect = document.getElementById('workflowSelect');
+    filePreview = document.createElement('img');
+    filePreview.className = 'file-preview';
+    fileInfo = document.createElement('div');
+    fileInfo.className = 'file-info';
+    confirmUploadBtn = document.getElementById('confirmUploadBtn');
+    cancelUploadBtn = document.getElementById('cancelUploadBtn');
+    uploadBtn = document.getElementById('uploadFileBtn');
+    
+    // Add file preview and info elements to the DOM
+    if (fileUploadArea) {
+        fileUploadArea.appendChild(filePreview);
+        fileUploadArea.appendChild(fileInfo);
+    }
     
     // Set up event listeners
     setupEventListeners();
-    
-    // Make resetFileUpload available globally for other modules
-    window.resetFileUpload = resetFileUpload;
 }
 
 /**
  * Set up event listeners for file upload
  */
 function setupEventListeners() {
-    // Open file upload modal
-    if (uploadFileBtn) {
-        uploadFileBtn.addEventListener('click', () => {
-            fileUploadModal.classList.add('active');
-        });
+    // Upload button
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', showFileUploadModal);
     }
     
-    // Close file upload modal
-    if (closeFileUploadModalBtn) {
-        closeFileUploadModalBtn.addEventListener('click', () => {
-            fileUploadModal.classList.remove('active');
-            resetFileUpload();
+    // File upload area click
+    if (fileUploadArea && fileInput) {
+        fileUploadArea.addEventListener('click', () => {
+            fileInput.click();
         });
-    }
-    
-    // Cancel upload
-    if (cancelUploadBtn) {
-        cancelUploadBtn.addEventListener('click', () => {
-            fileUploadModal.classList.remove('active');
-            resetFileUpload();
-        });
-    }
-    
-    // Confirm upload
-    if (confirmUploadBtn) {
-        confirmUploadBtn.addEventListener('click', processFileUpload);
     }
     
     // File input change
     if (fileInput) {
-        fileInput.addEventListener('change', handleFileSelect);
+        fileInput.addEventListener('change', handleFileSelection);
     }
     
-    // Drop area click
-    if (dropArea) {
-        dropArea.addEventListener('click', () => {
-            fileInput.click();
-        });
-        
-        // Drag and drop events
-        dropArea.addEventListener('dragover', (e) => {
+    // Drag and drop
+    if (fileUploadArea) {
+        fileUploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropArea.classList.add('dragover');
+            fileUploadArea.classList.add('dragover');
         });
         
-        dropArea.addEventListener('dragleave', () => {
-            dropArea.classList.remove('dragover');
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.classList.remove('dragover');
         });
         
-        dropArea.addEventListener('drop', (e) => {
+        fileUploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropArea.classList.remove('dragover');
+            fileUploadArea.classList.remove('dragover');
             
             if (e.dataTransfer.files.length > 0) {
-                handleFiles(e.dataTransfer.files);
+                handleFileSelection({ target: { files: e.dataTransfer.files } });
+            }
+        });
+    }
+    
+    // Confirm upload button
+    if (confirmUploadBtn) {
+        confirmUploadBtn.addEventListener('click', uploadFile);
+    }
+    
+    // Cancel upload button
+    if (cancelUploadBtn) {
+        cancelUploadBtn.addEventListener('click', () => {
+            hideFileUploadModal();
+            window.fileUpload.resetFileUpload();
+        });
+    }
+    
+    // Close modal button
+    const closeModalBtn = document.getElementById('closeFileUploadBtn');
+    if (closeModalBtn) {
+        console.log('Adding click event listener to close modal button');
+        closeModalBtn.addEventListener('click', function() {
+            console.log('Close modal button clicked');
+            const fileUploadModal = document.getElementById('fileUploadModal');
+            if (fileUploadModal) {
+                console.log('Removing active class from file upload modal');
+                fileUploadModal.classList.remove('active');
+                console.log('File upload modal classList after removing active:', fileUploadModal.classList);
+                window.fileUpload.resetFileUpload();
+            } else {
+                console.error('File upload modal not found');
+            }
+        });
+    } else {
+        console.error('Close modal button not found');
+    }
+    
+    // Add event listener for the close button in the history edit modal
+    const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+    if (closeHistoryBtn) {
+        closeHistoryBtn.addEventListener('click', () => {
+            const historyEditModal = document.getElementById('historyEditModal');
+            if (historyEditModal) {
+                historyEditModal.classList.remove('active');
             }
         });
     }
 }
 
 /**
- * Handle file selection from input
- * @param {Event} event - The change event
+ * Show the file upload modal
  */
-function handleFileSelect(event) {
-    if (event.target.files.length > 0) {
-        handleFiles(event.target.files);
+function showFileUploadModal() {
+    console.log('Show file upload modal called');
+    
+    // Get file upload modal element directly
+    fileUploadModal = document.getElementById('fileUploadModal');
+    
+    if (!fileUploadModal) {
+        console.error('File upload modal not found');
+        return;
     }
+    
+    console.log('File upload modal element:', fileUploadModal);
+    console.log('File upload modal classList before adding active:', fileUploadModal.classList);
+    
+    fileUploadModal.classList.add('active');
+    
+    console.log('File upload modal classList after adding active:', fileUploadModal.classList);
+    console.log('File upload modal should now be visible');
+    
+    // Check if the modal is actually visible in the DOM
+    console.log('File upload modal display style:', window.getComputedStyle(fileUploadModal).display);
 }
 
 /**
- * Handle files from input or drop
- * @param {FileList} files - The files to handle
+ * Hide the file upload modal
  */
-function handleFiles(files) {
-    selectedFile = files[0];
+function hideFileUploadModal() {
+    if (!fileUploadModal) return;
     
-    // Update UI
-    if (confirmUploadBtn) {
-        confirmUploadBtn.disabled = false;
-    }
-    
-    // Show image preview if it's an image
-    if (imagePreview && selectedFile.type.startsWith('image/')) {
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
-            imagePreview.src = e.target.result;
-            imagePreview.style.display = 'block';
-        };
-        
-        reader.readAsDataURL(selectedFile);
-    } else if (imagePreview) {
-        imagePreview.style.display = 'none';
-    }
-    
-    // Update drop area text
-    if (dropArea) {
-        const fileUploadText = dropArea.querySelector('.file-upload-text');
-        if (fileUploadText) {
-            fileUploadText.textContent = `Selected: ${selectedFile.name} (${formatFileSize(selectedFile.size)})`;
-        }
-    }
-}
-
-/**
- * Process the file upload
- */
-function processFileUpload() {
-    if (!selectedFile) return;
-    
-    // Get processing options
-    const enableOcr = enableOcrCheckbox ? enableOcrCheckbox.checked : true;
-    const extractTables = extractTablesCheckbox ? extractTablesCheckbox.checked : true;
-    const segmentDoc = segmentDocCheckbox ? segmentDocCheckbox.checked : false;
-    const workflow = workflowSelect ? workflowSelect.value : 'default';
-    
-    // In a real implementation, this would upload the file to a server
-    // For now, simulate processing
-    simulateFileProcessing(selectedFile, {
-        enableOcr,
-        extractTables,
-        segmentDoc,
-        workflow
-    });
-    
-    // Close modal
     fileUploadModal.classList.remove('active');
 }
 
 /**
- * Simulate file processing (for demo purposes)
- * @param {File} file - The file to process
- * @param {Object} options - Processing options
+ * Handle file selection
+ * @param {Event} event - The file input change event
  */
-function simulateFileProcessing(file, options) {
-    // Show loading message in chat
-    const loadingMessageId = generateId();
-    const loadingMessage = `Processing ${file.name}...`;
+function handleFileSelection(event) {
+    if (!event.target.files || event.target.files.length === 0) return;
     
-    // If addMessage function is available
-    if (typeof window.addMessage === 'function') {
-        window.addMessage(loadingMessage, 'assistant', { messageId: loadingMessageId });
-    } else {
-        // Fallback: add message to chat container
-        const chatContainer = document.getElementById('chatContainer');
-        if (chatContainer) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message assistant-message';
-            messageDiv.textContent = loadingMessage;
-            chatContainer.appendChild(messageDiv);
-        }
+    const file = event.target.files[0];
+    currentFile = file;
+    
+    // Update file info
+    if (fileInfo) {
+        fileInfo.textContent = `${file.name} (${formatFileSize(file.size)})`;
+        fileInfo.style.display = 'block';
     }
     
-    // Simulate processing delay
-    setTimeout(() => {
-        // Associate file with current conversation
-        associateFileWithConversation(file);
+    // Show file preview for images
+    if (filePreview && file.type.startsWith('image/')) {
+        const reader = new FileReader();
         
-        // Generate artifacts based on file type
-        generateArtifactsForFile(file, options);
-        
-        // Update loading message
-        const successMessage = `Processed ${file.name} successfully.`;
-        
-        // If there's a message element with the loading ID, update it
-        const loadingMessageElement = document.querySelector(`[data-message-id="${loadingMessageId}"]`);
-        if (loadingMessageElement) {
-            const contentDiv = loadingMessageElement.querySelector('.message-content');
-            if (contentDiv) {
-                contentDiv.textContent = successMessage;
-            } else {
-                loadingMessageElement.textContent = successMessage;
-            }
-        }
-        
-        // Update document viewer if in dashboard mode
-        updateDocumentViewer(file);
-    }, 1500);
-}
-
-/**
- * Associate file with current conversation
- * @param {File} file - The file to associate
- */
-function associateFileWithConversation(file) {
-    const currentConversationId = window.currentConversationId;
-    const conversations = window.conversations;
-    
-    if (currentConversationId && conversations && conversations[currentConversationId]) {
-        conversations[currentConversationId].associatedDocument = {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            lastModified: file.lastModified
+        reader.onload = (e) => {
+            filePreview.src = e.target.result;
+            filePreview.style.display = 'block';
         };
         
-        // Save conversations if the function is available
-        if (typeof window.saveConversations === 'function') {
-            window.saveConversations();
-        } else {
-            localStorage.setItem('kynseyAiConversations', JSON.stringify(conversations));
-        }
-    }
-}
-
-/**
- * Generate artifacts based on file type
- * @param {File} file - The file to generate artifacts for
- * @param {Object} options - Processing options
- */
-function generateArtifactsForFile(file, options) {
-    // Generate different artifacts based on file type
-    if (file.type.includes('pdf') || file.type.includes('word')) {
-        // Text extraction artifact
-        const textArtifact = {
-            title: 'Extracted Text',
-            type: 'text',
-            content: `This is the extracted text content from ${file.name}.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nisl eget ultricies tincidunt, nisl nisl aliquam nisl, eget ultricies nisl nisl eget nisl.`
-        };
-        
-        renderArtifact(textArtifact);
-        
-        // If OCR is enabled
-        if (options.enableOcr) {
-            const ocrArtifact = {
-                title: 'OCR Results',
-                type: 'text',
-                content: `OCR processing results for ${file.name}.\n\nAdditional text extracted from images in the document.`
-            };
-            
-            renderArtifact(ocrArtifact);
-        }
-        
-        // If table extraction is enabled
-        if (options.extractTables) {
-            const tableArtifact = {
-                title: 'Extracted Table',
-                type: 'csv',
-                content: 'ID,Name,Value\n1,Item 1,15.2\n2,Item 2,10.0\n3,Item 3,22.5'
-            };
-            
-            renderArtifact(tableArtifact);
-        }
-    } else if (file.type.includes('excel') || file.type.includes('spreadsheet')) {
-        // Table artifact
-        const tableArtifact = {
-            title: 'Spreadsheet Data',
-            type: 'csv',
-            content: 'ID,Name,Value,Category\n1,Item 1,15.2,A\n2,Item 2,10.0,B\n3,Item 3,22.5,A\n4,Item 4,8.7,C'
-        };
-        
-        renderArtifact(tableArtifact);
-        
-        // Analysis artifact
-        const analysisArtifact = {
-            title: 'Data Analysis',
-            type: 'markdown',
-            content: `# Spreadsheet Analysis\n\n## Summary Statistics\n\n- **Count:** 4 items\n- **Total Value:** 56.4\n- **Average Value:** 14.1\n- **Categories:** A (2), B (1), C (1)\n\n## Recommendations\n\nBased on the data, category A has the highest total value.`
-        };
-        
-        renderArtifact(analysisArtifact);
-    } else if (file.type.startsWith('image/')) {
-        // Image analysis artifact
-        const imageAnalysisArtifact = {
-            title: 'Image Analysis',
-            type: 'markdown',
-            content: `# Image Analysis\n\n## Detected Objects\n\n- Person (confidence: 0.92)\n- Chair (confidence: 0.87)\n- Table (confidence: 0.76)\n\n## Scene Classification\n\nIndoor office environment (confidence: 0.89)`
-        };
-        
-        renderArtifact(imageAnalysisArtifact);
-        
-        // If OCR is enabled
-        if (options.enableOcr) {
-            const ocrArtifact = {
-                title: 'OCR Results',
-                type: 'text',
-                content: `Text detected in image:\n\n"SAMPLE DOCUMENT\nImportant information\nDate: 2023-04-15\nReference: DOC-12345"`
-            };
-            
-            renderArtifact(ocrArtifact);
-        }
-    } else if (file.type.includes('dicom')) {
-        // DICOM metadata artifact
-        const dicomMetadataArtifact = {
-            title: 'DICOM Metadata',
-            type: 'code',
-            language: 'json',
-            content: JSON.stringify({
-                patientID: 'ANONYMOUS',
-                studyDate: '20230415',
-                modality: 'MR',
-                manufacturer: 'GE MEDICAL SYSTEMS',
-                pixelSpacing: [0.5, 0.5],
-                rows: 512,
-                columns: 512
-            }, null, 2)
-        };
-        
-        renderArtifact(dicomMetadataArtifact);
-        
-        // Analysis artifact
-        const analysisArtifact = {
-            title: 'Image Analysis',
-            type: 'markdown',
-            content: `# DICOM Image Analysis\n\n## Findings\n\n- No abnormalities detected\n- Normal tissue contrast\n- Good image quality\n\n## Technical Assessment\n\nThis is a standard MR image with good quality and resolution.`
-        };
-        
-        renderArtifact(analysisArtifact);
-    }
-}
-
-/**
- * Update document viewer if in dashboard mode
- * @param {File} file - The file that was uploaded
- */
-function updateDocumentViewer(file) {
-    // Check if in dashboard mode
-    if (typeof window.currentViewMode !== 'undefined' && window.currentViewMode === 'dashboard') {
-        const docViewer = document.getElementById('documentViewerPlaceholder');
-        
-        if (docViewer) {
-            // In a real implementation, this would display the document
-            // For now, just show a placeholder
-            docViewer.innerHTML = `
-                <div id="annotationToolbar">
-                    <button class="tool-btn">Highlight</button>
-                    <button class="tool-btn">Comment</button>
-                    <button class="tool-btn">Draw</button>
-                </div>
-                <div style="text-align: center; padding: 1rem;">
-                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">${getFileIcon(file.type)}</div>
-                    <div>${file.name}</div>
-                    <div style="color: var(--text-muted); font-size: 0.8rem;">${formatFileSize(file.size)}</div>
-                </div>
-            `;
-        }
-    }
-}
-
-/**
- * Reset file upload state
- */
-export function resetFileUpload() {
-    selectedFile = null;
-    
-    if (fileInput) {
-        fileInput.value = '';
+        reader.readAsDataURL(file);
+    } else if (filePreview) {
+        filePreview.style.display = 'none';
     }
     
-    if (imagePreview) {
-        imagePreview.style.display = 'none';
-        imagePreview.src = '';
-    }
-    
+    // Enable confirm button
     if (confirmUploadBtn) {
-        confirmUploadBtn.disabled = true;
+        confirmUploadBtn.disabled = false;
     }
-    
-    if (dropArea) {
-        const fileUploadText = dropArea.querySelector('.file-upload-text');
-        if (fileUploadText) {
-            fileUploadText.textContent = 'Drag & drop file or click to browse (PDF, DOCX, XLSX, DICOM, Images, Text...)';
-        }
-    }
-    
-    // Reset checkboxes to defaults
-    if (enableOcrCheckbox) enableOcrCheckbox.checked = true;
-    if (extractTablesCheckbox) extractTablesCheckbox.checked = true;
-    if (segmentDocCheckbox) segmentDocCheckbox.checked = false;
-    if (workflowSelect) workflowSelect.value = 'default';
 }
 
 /**
@@ -435,16 +213,249 @@ function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 /**
- * Generate a unique ID
- * @returns {string} A unique ID
+ * Upload the selected file
  */
-function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+function uploadFile() {
+    if (!currentFile || !window.conversations || !window.conversations.currentConversationId) {
+        console.error('No file selected or no active conversation');
+        return;
+    }
+    
+    // In a real implementation, this would upload the file to a server
+    // For now, we'll just simulate the upload and associate it with the current conversation
+    
+    // Create a message about the upload
+    const messageText = `Uploaded file: ${currentFile.name} (${formatFileSize(currentFile.size)})`;
+    
+    if (typeof window.conversations.addMessage === 'function') {
+        const messageId = window.utils.generateId();
+        
+        // Create a file placeholder element
+        const filePlaceholder = document.createElement('div');
+        filePlaceholder.className = 'file-placeholder';
+        
+        const fileIcon = document.createElement('span');
+        fileIcon.textContent = window.utils.getFileIcon(currentFile.type);
+        
+        const fileName = document.createElement('span');
+        fileName.textContent = currentFile.name;
+        
+        filePlaceholder.appendChild(fileIcon);
+        filePlaceholder.appendChild(fileName);
+        
+        // Add message with file placeholder
+        const messageDiv = window.conversations.addMessage(messageText, 'user', { messageId });
+        
+        if (messageDiv) {
+            const contentDiv = messageDiv.querySelector('.message-content');
+            if (contentDiv) {
+                contentDiv.appendChild(filePlaceholder);
+            }
+        }
+        
+        // Add to conversation history
+        if (window.conversations.conversations[window.conversations.currentConversationId]) {
+            window.conversations.conversations[window.conversations.currentConversationId].history.push({
+                role: 'user',
+                content: messageText,
+                id: messageId,
+                file: {
+                    name: currentFile.name,
+                    type: currentFile.type,
+                    size: currentFile.size
+                }
+            });
+            
+            // Associate document with conversation if it's a document type
+            const docTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'text/csv'];
+            
+            if (docTypes.some(type => currentFile.type.includes(type))) {
+                window.conversations.conversations[window.conversations.currentConversationId].associatedDocument = {
+                    name: currentFile.name,
+                    type: currentFile.type,
+                    size: currentFile.size,
+                    uploadedAt: new Date().toISOString()
+                };
+                
+                // Update document viewer if in dashboard mode
+                if (typeof window.ui !== 'undefined' && window.ui.currentViewMode === 'dashboard') {
+                    const docViewer = document.getElementById('documentViewerPlaceholder');
+                    
+                    if (docViewer) {
+                        docViewer.innerHTML = `Loading ${currentFile.name}...`;
+                    }
+                }
+            }
+            
+            // Save conversations
+            localStorage.setItem('kynseyAiConversations', JSON.stringify(window.conversations.conversations));
+        }
+        
+        // Simulate assistant response
+        setTimeout(() => {
+            const assistantMessageId = window.utils.generateId();
+            const assistantMessage = window.conversations.addMessage('', 'assistant', { 
+                messageId: assistantMessageId,
+                isHtml: true,
+                isStreaming: true
+            });
+            
+            simulateFileAnalysisResponse(assistantMessage, assistantMessageId, currentFile);
+        }, 1000);
+    }
+    
+    // Hide modal and reset
+    hideFileUploadModal();
+    window.fileUpload.resetFileUpload();
+}
+
+/**
+ * Simulate file analysis response
+ * @param {HTMLElement} messageElement - The message element
+ * @param {string} messageId - The message ID
+ * @param {File} file - The uploaded file
+ */
+function simulateFileAnalysisResponse(messageElement, messageId, file) {
+    // Sample response based on file type
+    let response = '';
+    
+    if (file.type.startsWith('image/')) {
+        response = `I've analyzed the image "${file.name}".\n\n` +
+            "This appears to be an image file. I can see the contents and identify key elements in it. " +
+            "Would you like me to describe what I see in the image, or do you have specific questions about it?";
+    } else if (file.type.includes('pdf')) {
+        response = `I've analyzed the PDF document "${file.name}".\n\n` +
+            "This appears to be a PDF document. I've extracted the text content and can help you understand it. " +
+            "The document seems to contain information about [simulated content]. " +
+            "Would you like me to summarize the key points or answer specific questions about the document?";
+    } else if (file.type.includes('word')) {
+        response = `I've analyzed the Word document "${file.name}".\n\n` +
+            "This appears to be a Word document. I've extracted the text content and can help you understand it. " +
+            "The document seems to be about [simulated content]. " +
+            "Would you like me to summarize the key points or answer specific questions about the document?";
+    } else if (file.type.includes('csv') || file.type.includes('excel')) {
+        response = `I've analyzed the spreadsheet "${file.name}".\n\n` +
+            "This appears to be a data file. I've analyzed the data and can help you understand it. " +
+            "The data contains [simulated content] with approximately [X] rows and [Y] columns. " +
+            "Would you like me to perform some analysis on this data or visualize it in some way?";
+    } else {
+        response = `I've received the file "${file.name}".\n\n` +
+            `This is a ${file.type} file. I can help you analyze its contents or answer questions about it. ` +
+            "What would you like to know about this file?";
+    }
+    
+    let index = 0;
+    const contentDiv = messageElement.querySelector('.message-content');
+    
+    // Simulate typing
+    const interval = setInterval(() => {
+        if (index < response.length) {
+            const char = response.charAt(index);
+            contentDiv.innerHTML += char;
+            messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            index++;
+        } else {
+            clearInterval(interval);
+            messageElement.classList.remove('streaming');
+            
+            // Apply syntax highlighting
+            window.utils.highlightCodeInElement(messageElement);
+            
+            // Add to conversation history
+            if (window.conversations && window.conversations.currentConversationId && window.conversations.conversations[window.conversations.currentConversationId]) {
+                window.conversations.conversations[window.conversations.currentConversationId].history.push({
+                    role: 'assistant',
+                    content: response,
+                    id: messageId
+                });
+                
+                localStorage.setItem('kynseyAiConversations', JSON.stringify(window.conversations.conversations));
+            }
+            
+            // Create an artifact for document analysis
+            if (file.type.includes('pdf') || file.type.includes('word') || file.type.includes('csv')) {
+                createDocumentAnalysisArtifact(file);
+            }
+        }
+    }, 10);
+}
+
+/**
+ * Create a document analysis artifact
+ * @param {File} file - The uploaded file
+ */
+function createDocumentAnalysisArtifact(file) {
+    if (!window.conversations || typeof window.conversations.renderArtifact !== 'function') return;
+    
+    // Create a sample artifact based on file type
+    let artifactContent = '';
+    let artifactType = 'text';
+    
+    if (file.type.includes('pdf') || file.type.includes('word')) {
+        artifactContent = "# Document Analysis\n\n" +
+            `## ${file.name}\n\n` +
+            "### Key Points\n\n" +
+            "- This is a simulated document analysis\n" +
+            "- The document appears to be about [topic]\n" +
+            "- Key entities mentioned: [Entity 1], [Entity 2], [Entity 3]\n\n" +
+            "### Summary\n\n" +
+            "This document discusses [simulated content]. It appears to be [formal/informal] in tone " +
+            "and likely intended for [audience]. The main thesis seems to be [simulated thesis].";
+        artifactType = 'markdown';
+    } else if (file.type.includes('csv')) {
+        artifactContent = "# Data Analysis\n\n" +
+            `## ${file.name}\n\n` +
+            "### Dataset Overview\n\n" +
+            "- Rows: [simulated number]\n" +
+            "- Columns: [simulated number]\n" +
+            "- Missing values: [simulated percentage]\n\n" +
+            "### Key Statistics\n\n" +
+            "| Column | Mean | Median | Min | Max |\n" +
+            "|--------|------|--------|-----|-----|\n" +
+            "| Col 1  | 42.3 | 40.1   | 10.5| 95.2|\n" +
+            "| Col 2  | 18.7 | 15.9   | 0.1 | 45.8|\n\n" +
+            "### Correlations\n\n" +
+            "Strong positive correlation between [Col 1] and [Col 3] (r=0.85)";
+        artifactType = 'markdown';
+    }
+    
+    if (artifactContent) {
+        window.conversations.renderArtifact({
+            title: `Analysis of ${file.name}`,
+            content: artifactContent,
+            type: artifactType
+        });
+    }
+}
+
+/**
+ * Reset file upload state
+ */
+window.fileUpload.resetFileUpload = function() {
+    currentFile = null;
+    
+    if (fileInput) {
+        fileInput.value = '';
+    }
+    
+    if (filePreview) {
+        filePreview.src = '';
+        filePreview.style.display = 'none';
+    }
+    
+    if (fileInfo) {
+        fileInfo.textContent = '';
+        fileInfo.style.display = 'none';
+    }
+    
+    if (confirmUploadBtn) {
+        confirmUploadBtn.disabled = true;
+    }
 }

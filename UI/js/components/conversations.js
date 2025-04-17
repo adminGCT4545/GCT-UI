@@ -4,7 +4,8 @@
  * Handles conversation management, including creating, loading, and saving conversations.
  */
 
-import { generateId, sanitizeHTML, parseAndSanitizeMarkdown, highlightCodeInElement, autoResizeTextarea } from '../utils/utils.js';
+// Create a global conversations object
+window.conversations = {};
 
 // DOM Elements
 let conversationList;
@@ -19,23 +20,23 @@ let historyEditModal;
 let historyEditContent;
 
 // State
-let conversations = {};
-let currentConversationId = null;
-let selectedModel = 'llama3:8b';
-let currentTemperature = 0.7;
-let isThinkingModeEnabled = false;
-let isWebSearchEnabled = false;
-let currentResponseStyle = 'normal';
-let currentDataResidency = 'us';
-let isMedTermEnabled = false;
-let isEquipSpecEnabled = false;
-let isRagEnabled = false;
-let currentKbEndpoint = '';
+window.conversations.conversations = {};
+window.conversations.currentConversationId = null;
+window.conversations.selectedModel = 'llama3:8b';
+window.conversations.currentTemperature = 0.7;
+window.conversations.isThinkingModeEnabled = false;
+window.conversations.isWebSearchEnabled = false;
+window.conversations.currentResponseStyle = 'normal';
+window.conversations.currentDataResidency = 'us';
+window.conversations.isMedTermEnabled = false;
+window.conversations.isEquipSpecEnabled = false;
+window.conversations.isRagEnabled = false;
+window.conversations.currentKbEndpoint = '';
 
 /**
  * Initialize conversation management
  */
-export function initializeConversations() {
+window.conversations.initializeConversations = function() {
     // Get DOM elements
     conversationList = document.getElementById('conversationList');
     conversationTitle = document.getElementById('conversationTitle');
@@ -55,8 +56,7 @@ export function initializeConversations() {
     setupEventListeners();
     
     // Make conversations available globally for other modules
-    window.conversations = conversations;
-    window.currentConversationId = currentConversationId;
+    window.currentConversationId = window.conversations.currentConversationId;
 }
 
 /**
@@ -66,7 +66,7 @@ function setupEventListeners() {
     // New chat button
     if (newChatBtn) {
         newChatBtn.addEventListener('click', () => {
-            createNewConversation();
+            window.conversations.createNewConversation();
         });
     }
     
@@ -85,7 +85,7 @@ function setupEventListeners() {
         
         // Auto-resize textarea
         messageInput.addEventListener('input', () => {
-            autoResizeTextarea(messageInput);
+            window.utils.autoResizeTextarea(messageInput);
         });
     }
     
@@ -120,32 +120,32 @@ function loadSavedConversations() {
     try {
         const savedConversations = localStorage.getItem('kynseyAiConversations');
         if (savedConversations) {
-            conversations = JSON.parse(savedConversations);
+            window.conversations.conversations = JSON.parse(savedConversations);
         }
         
         const lastConversationId = localStorage.getItem('kynseyAiLastConversationId');
         
         // If there are saved conversations, load the last active one
-        if (Object.keys(conversations).length > 0) {
-            if (lastConversationId && conversations[lastConversationId]) {
+        if (Object.keys(window.conversations.conversations).length > 0) {
+            if (lastConversationId && window.conversations.conversations[lastConversationId]) {
                 loadConversation(lastConversationId);
             } else {
                 // Load the most recent conversation
-                const sortedIds = Object.keys(conversations).sort((a, b) => {
-                    return new Date(conversations[b].createdAt || 0) - new Date(conversations[a].createdAt || 0);
+                const sortedIds = Object.keys(window.conversations.conversations).sort((a, b) => {
+                    return new Date(window.conversations.conversations[b].createdAt || 0) - new Date(window.conversations.conversations[a].createdAt || 0);
                 });
                 loadConversation(sortedIds[0]);
             }
         } else {
             // Create a new conversation if none exist
-            createNewConversation();
+            window.conversations.createNewConversation();
         }
         
         // Render the conversation list
         renderConversationList();
     } catch (error) {
         console.error('Error loading saved conversations:', error);
-        createNewConversation();
+        window.conversations.createNewConversation();
     }
 }
 
@@ -154,25 +154,25 @@ function loadSavedConversations() {
  * @param {boolean} setActive - Whether to set the new conversation as active
  * @returns {string} The ID of the new conversation
  */
-export function createNewConversation(setActive = true) {
-    const newId = generateId();
+window.conversations.createNewConversation = function(setActive = true) {
+    const newId = window.utils.generateId();
     const timestamp = new Date();
     const defaultName = `Analysis ${timestamp.toLocaleDateString()} ${timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     
-    conversations[newId] = {
+    window.conversations.conversations[newId] = {
         id: newId,
         name: defaultName,
         history: [],
-        model: selectedModel,
-        temperature: currentTemperature,
-        thinkingMode: isThinkingModeEnabled,
-        webSearch: isWebSearchEnabled,
-        responseStyle: currentResponseStyle,
-        dataResidency: currentDataResidency,
-        medTermEnabled: isMedTermEnabled,
-        equipSpecEnabled: isEquipSpecEnabled,
-        ragEnabled: isRagEnabled,
-        kbEndpoint: currentKbEndpoint,
+        model: window.conversations.selectedModel,
+        temperature: window.conversations.currentTemperature,
+        thinkingMode: window.conversations.isThinkingModeEnabled,
+        webSearch: window.conversations.isWebSearchEnabled,
+        responseStyle: window.conversations.currentResponseStyle,
+        dataResidency: window.conversations.currentDataResidency,
+        medTermEnabled: window.conversations.isMedTermEnabled,
+        equipSpecEnabled: window.conversations.isEquipSpecEnabled,
+        ragEnabled: window.conversations.isRagEnabled,
+        kbEndpoint: window.conversations.currentKbEndpoint,
         createdAt: timestamp.toISOString(),
         associatedDocument: null,
         notepadContent: '',
@@ -180,7 +180,7 @@ export function createNewConversation(setActive = true) {
     };
     
     if (setActive) {
-        currentConversationId = newId;
+        window.conversations.currentConversationId = newId;
         window.currentConversationId = newId;
         loadConversation(newId);
         renderConversationList();
@@ -192,42 +192,15 @@ export function createNewConversation(setActive = true) {
 
 /**
  * Load a conversation
- * @param {string} id - The ID of the conversation to load
+ * @param {string} conversationId - The ID of the conversation to load
  */
-export function loadConversation(id) {
-    if (!conversations[id]) {
-        console.error("Conversation not found:", id);
-        
-        if (Object.keys(conversations).length > 0) {
-            loadConversation(Object.keys(conversations)[0]);
-        } else {
-            createNewConversation();
-        }
-        
-        return;
-    }
+function loadConversation(conversationId) {
+    if (!window.conversations.conversations[conversationId]) return;
     
-    currentConversationId = id;
-    window.currentConversationId = id;
+    window.conversations.currentConversationId = conversationId;
+    window.currentConversationId = conversationId;
     
-    const conv = conversations[id];
-    
-    // Update model settings
-    selectedModel = conv.model || 'llama3:8b';
-    currentTemperature = conv.temperature || 0.7;
-    isThinkingModeEnabled = conv.thinkingMode || false;
-    isWebSearchEnabled = conv.webSearch || false;
-    currentResponseStyle = conv.responseStyle || 'normal';
-    currentDataResidency = conv.dataResidency || 'us';
-    isMedTermEnabled = conv.medTermEnabled || false;
-    isEquipSpecEnabled = conv.equipSpecEnabled || false;
-    isRagEnabled = conv.ragEnabled || false;
-    currentKbEndpoint = conv.kbEndpoint || '';
-    
-    // Update settings UI if needed
-    if (typeof updateSettingsUI === 'function') {
-        updateSettingsUI();
-    }
+    const conv = window.conversations.conversations[conversationId];
     
     // Update conversation title
     if (conversationTitle) {
@@ -244,8 +217,8 @@ export function loadConversation(id) {
         
         // Add messages from history
         if (conv.history.length === 0) {
-            const initialMsgId = generateId();
-            addMessage('Hello! How can I help you today?', 'assistant', { messageId: initialMsgId });
+            const initialMsgId = window.utils.generateId();
+            window.conversations.addMessage('Hello! How can I help you today?', 'assistant', { messageId: initialMsgId });
             conv.history.push({ 
                 role: 'assistant', 
                 content: 'Hello! How can I help you today?', 
@@ -253,7 +226,7 @@ export function loadConversation(id) {
             });
         } else {
             conv.history.forEach(msg => {
-                addMessage(msg.content, msg.role, { 
+                window.conversations.addMessage(msg.content, msg.role, { 
                     messageId: msg.id, 
                     isHtml: msg.role === 'assistant',
                     citations: msg.citations,
@@ -264,7 +237,7 @@ export function loadConversation(id) {
     }
     
     // Update document viewer if in dashboard mode
-    if (typeof currentViewMode !== 'undefined' && currentViewMode === 'dashboard') {
+    if (typeof window.ui !== 'undefined' && window.ui.currentViewMode === 'dashboard') {
         const docViewer = document.getElementById('documentViewerPlaceholder');
         
         if (docViewer) {
@@ -277,14 +250,14 @@ export function loadConversation(id) {
     }
     
     // Reset file upload if needed
-    if (typeof resetFileUpload === 'function') {
-        resetFileUpload();
+    if (typeof window.fileUpload !== 'undefined' && typeof window.fileUpload.resetFileUpload === 'function') {
+        window.fileUpload.resetFileUpload();
     }
     
     // Clear message input
     if (messageInput) {
         messageInput.value = '';
-        autoResizeTextarea(messageInput);
+        window.utils.autoResizeTextarea(messageInput);
     }
     
     // Update button states
@@ -303,13 +276,13 @@ export function loadConversation(id) {
         rightPanel.classList.remove('visible');
         
         if (conv.artifacts && conv.artifacts.length > 0) {
-            conv.artifacts.forEach(renderArtifact);
+            conv.artifacts.forEach(window.conversations.renderArtifact);
         }
     }
     
     // Load notepad content
-    if (typeof loadNotepadContent === 'function') {
-        loadNotepadContent();
+    if (typeof window.notepad !== 'undefined' && typeof window.notepad.loadNotepadContent === 'function') {
+        window.notepad.loadNotepadContent();
     }
 }
 
@@ -319,12 +292,12 @@ export function loadConversation(id) {
  * @param {string} role - The role of the message sender ('user' or 'assistant')
  * @param {Object} options - Additional options
  */
-export function addMessage(text, role, options = {}) {
+window.conversations.addMessage = function(text, role, options = {}) {
     if (!chatContainer) return;
     
     const { 
         isHtml = false, 
-        messageId = generateId(), 
+        messageId = window.utils.generateId(), 
         citations = null, 
         confidence = null,
         isStreaming = false
@@ -350,7 +323,7 @@ export function addMessage(text, role, options = {}) {
     contentDiv.className = 'message-content';
     
     if (isHtml) {
-        contentDiv.innerHTML = sanitizeHTML(text);
+        contentDiv.innerHTML = window.utils.sanitizeHTML(text);
     } else {
         contentDiv.textContent = text;
     }
@@ -423,7 +396,7 @@ export function addMessage(text, role, options = {}) {
     chatContainer.appendChild(messageDiv);
     
     // Apply syntax highlighting to code blocks
-    highlightCodeInElement(messageDiv);
+    window.utils.highlightCodeInElement(messageDiv);
     
     // Scroll to bottom
     chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -446,18 +419,18 @@ function sendMessage() {
         const noteText = messageText.substring(6);
         addNoteToNotepad(noteText);
         messageInput.value = '';
-        autoResizeTextarea(messageInput);
+        window.utils.autoResizeTextarea(messageInput);
         updateButtonStates();
         return;
     }
     
     // Add user message to chat
-    const userMessageId = generateId();
-    addMessage(messageText, 'user', { messageId: userMessageId });
+    const userMessageId = window.utils.generateId();
+    window.conversations.addMessage(messageText, 'user', { messageId: userMessageId });
     
     // Add to conversation history
-    if (currentConversationId && conversations[currentConversationId]) {
-        conversations[currentConversationId].history.push({
+    if (window.conversations.currentConversationId && window.conversations.conversations[window.conversations.currentConversationId]) {
+        window.conversations.conversations[window.conversations.currentConversationId].history.push({
             role: 'user',
             content: messageText,
             id: userMessageId
@@ -468,12 +441,12 @@ function sendMessage() {
     
     // Clear input
     messageInput.value = '';
-    autoResizeTextarea(messageInput);
+    window.utils.autoResizeTextarea(messageInput);
     updateButtonStates();
     
     // Add assistant message (streaming)
-    const assistantMessageId = generateId();
-    const assistantMessage = addMessage('', 'assistant', { 
+    const assistantMessageId = window.utils.generateId();
+    const assistantMessage = window.conversations.addMessage('', 'assistant', { 
         messageId: assistantMessageId,
         isHtml: true,
         isStreaming: true
@@ -518,11 +491,11 @@ function simulateAssistantResponse(messageElement, messageId) {
             messageElement.classList.remove('streaming');
             
             // Apply syntax highlighting
-            highlightCodeInElement(messageElement);
+            window.utils.highlightCodeInElement(messageElement);
             
             // Add to conversation history
-            if (currentConversationId && conversations[currentConversationId]) {
-                conversations[currentConversationId].history.push({
+            if (window.conversations.currentConversationId && window.conversations.conversations[window.conversations.currentConversationId]) {
+                window.conversations.conversations[window.conversations.currentConversationId].history.push({
                     role: 'assistant',
                     content: response,
                     id: messageId
@@ -539,9 +512,9 @@ function simulateAssistantResponse(messageElement, messageId) {
  * @param {string} messageId - The ID of the message to delete
  */
 function deleteMessage(messageId) {
-    if (!currentConversationId || !conversations[currentConversationId]) return;
+    if (!window.conversations.currentConversationId || !window.conversations.conversations[window.conversations.currentConversationId]) return;
     
-    const conversation = conversations[currentConversationId];
+    const conversation = window.conversations.conversations[window.conversations.currentConversationId];
     const messageIndex = conversation.history.findIndex(msg => msg.id === messageId);
     
     if (messageIndex > -1) {
@@ -560,11 +533,11 @@ function deleteMessage(messageId) {
  * Save the conversation title
  */
 function saveConversationTitle() {
-    if (!conversationTitle || !conversationTitleInput || !currentConversationId || !conversations[currentConversationId]) return;
+    if (!conversationTitle || !conversationTitleInput || !window.conversations.currentConversationId || !window.conversations.conversations[window.conversations.currentConversationId]) return;
     
     const newTitle = conversationTitleInput.value.trim();
     if (newTitle) {
-        conversations[currentConversationId].name = newTitle;
+        window.conversations.conversations[window.conversations.currentConversationId].name = newTitle;
         conversationTitle.textContent = newTitle;
         saveConversations();
         renderConversationList();
@@ -582,12 +555,12 @@ function renderConversationList() {
     
     conversationList.innerHTML = '';
     
-    const sortedIds = Object.keys(conversations).sort((a, b) => {
-        return new Date(conversations[b].createdAt || 0) - new Date(conversations[a].createdAt || 0);
+    const sortedIds = Object.keys(window.conversations.conversations).sort((a, b) => {
+        return new Date(window.conversations.conversations[b].createdAt || 0) - new Date(window.conversations.conversations[a].createdAt || 0);
     });
     
     sortedIds.forEach(id => {
-        const conv = conversations[id];
+        const conv = window.conversations.conversations[id];
         const item = document.createElement('button');
         item.className = 'sidebar-item';
         item.dataset.convId = id;
@@ -608,7 +581,7 @@ function highlightActiveConversation() {
     
     const items = conversationList.querySelectorAll('.sidebar-item');
     items.forEach(item => {
-        item.classList.toggle('active', item.dataset.convId === currentConversationId);
+        item.classList.toggle('active', item.dataset.convId === window.conversations.currentConversationId);
     });
 }
 
@@ -625,17 +598,17 @@ function updateButtonStates() {
  * Save conversations to localStorage
  */
 function saveConversations() {
-    localStorage.setItem('kynseyAiConversations', JSON.stringify(conversations));
-    localStorage.setItem('kynseyAiLastConversationId', currentConversationId);
+    localStorage.setItem('kynseyAiConversations', JSON.stringify(window.conversations.conversations));
+    localStorage.setItem('kynseyAiLastConversationId', window.conversations.currentConversationId);
 }
 
 /**
  * Show the history edit modal
  */
-function showHistoryEditModal() {
-    if (!historyEditModal || !historyEditContent || !currentConversationId || !conversations[currentConversationId]) return;
+window.conversations.showHistoryEditModal = function() {
+    if (!historyEditModal || !historyEditContent || !window.conversations.currentConversationId || !window.conversations.conversations[window.conversations.currentConversationId]) return;
     
-    const conversation = conversations[currentConversationId];
+    const conversation = window.conversations.conversations[window.conversations.currentConversationId];
     historyEditContent.innerHTML = '';
     
     if (conversation.history.length === 0) {
@@ -685,8 +658,8 @@ function addNoteToNotepad(noteText) {
     if (!noteText) return;
     
     // If notepad functionality is available
-    if (typeof window.addNoteFromChat === 'function') {
-        window.addNoteFromChat(noteText);
+    if (typeof window.notepad !== 'undefined' && typeof window.notepad.addNoteFromChat === 'function') {
+        window.notepad.addNoteFromChat(noteText);
     } else {
         console.log('Notepad functionality not available');
     }
@@ -696,7 +669,7 @@ function addNoteToNotepad(noteText) {
  * Render an artifact in the right panel
  * @param {Object} artifact - The artifact to render
  */
-function renderArtifact(artifact) {
+window.conversations.renderArtifact = function(artifact) {
     if (!artifact || !artifact.content) {
         console.warn("Attempted to render invalid artifact:", artifact);
         return;
@@ -714,7 +687,7 @@ function renderArtifact(artifact) {
         placeholder.remove();
     }
     
-    const artifactId = artifact.id || generateId();
+    const artifactId = artifact.id || window.utils.generateId();
     
     // Check if artifact already exists
     if (rightPanel.querySelector(`[data-artifact-id="${artifactId}"]`)) {
@@ -727,13 +700,13 @@ function renderArtifact(artifact) {
     artifactDiv.dataset.artifactId = artifactId;
     
     const type = artifact.type || 'text';
-    const title = sanitizeHTML(artifact.title || `Artifact (${type})`);
-    const safeType = sanitizeHTML(type);
+    const title = window.utils.sanitizeHTML(artifact.title || `Artifact (${type})`);
+    const safeType = window.utils.sanitizeHTML(type);
     
     let contentHtml = '';
     
     if (type === 'code' || type === 'csv' || type === 'json') {
-        const lang = sanitizeHTML(artifact.language || (type === 'csv' ? 'csv' : (type === 'json' ? 'json' : '')));
+        const lang = window.utils.sanitizeHTML(artifact.language || (type === 'csv' ? 'csv' : (type === 'json' ? 'json' : '')));
         
         // Create code element
         const codeElement = document.createElement('code');
@@ -742,9 +715,9 @@ function renderArtifact(artifact) {
         
         contentHtml = `<pre>${codeElement.outerHTML}</pre>`;
     } else if (type === 'markdown') {
-        contentHtml = parseAndSanitizeMarkdown(artifact.content);
+        contentHtml = window.utils.parseAndSanitizeMarkdown(artifact.content);
     } else {
-        contentHtml = `<p>${sanitizeHTML(artifact.content).replace(/\n/g, '<br>')}</p>`;
+        contentHtml = `<p>${window.utils.sanitizeHTML(artifact.content).replace(/\n/g, '<br>')}</p>`;
     }
     
     artifactDiv.innerHTML = `
@@ -758,35 +731,18 @@ function renderArtifact(artifact) {
     rightPanel.appendChild(artifactDiv);
     
     // Apply syntax highlighting
-    highlightCodeInElement(artifactDiv);
+    window.utils.highlightCodeInElement(artifactDiv);
     
     // Add artifact to conversation state if not already there
-    if (currentConversationId && conversations[currentConversationId]) {
-        if (!conversations[currentConversationId].artifacts) {
-            conversations[currentConversationId].artifacts = [];
+    if (window.conversations.currentConversationId && window.conversations.conversations[window.conversations.currentConversationId]) {
+        if (!window.conversations.conversations[window.conversations.currentConversationId].artifacts) {
+            window.conversations.conversations[window.conversations.currentConversationId].artifacts = [];
         }
         
         // Add only if it doesn't exist by ID
-        if (!conversations[currentConversationId].artifacts.some(a => a.id === artifactId)) {
-            conversations[currentConversationId].artifacts.push({ ...artifact, id: artifactId });
+        if (!window.conversations.conversations[window.conversations.currentConversationId].artifacts.some(a => a.id === artifactId)) {
+            window.conversations.conversations[window.conversations.currentConversationId].artifacts.push({ ...artifact, id: artifactId });
             saveConversations();
         }
     }
 }
-
-// Export functions and state for other modules
-export {
-    conversations,
-    currentConversationId,
-    selectedModel,
-    currentTemperature,
-    isThinkingModeEnabled,
-    isWebSearchEnabled,
-    currentResponseStyle,
-    currentDataResidency,
-    isMedTermEnabled,
-    isEquipSpecEnabled,
-    isRagEnabled,
-    currentKbEndpoint,
-    renderArtifact
-};
