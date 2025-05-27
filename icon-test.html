@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCT UI - Icon Test</title>
+    <link rel="stylesheet" href="mobile-styles.css">
+    <link rel="stylesheet" href="error-styles.css">
+    <style>
+        .icon-test {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+            background-color: #0f0f0f;
+            color: white;
+        }
+        
+        .icon-test h1 {
+            margin-bottom: 20px;
+        }
+        
+        .status {
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #aaa;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        
+        .icons-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+            max-width: 600px;
+        }
+        
+        .icon-test-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .icon-name {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #bbb;
+        }
+        
+        .lucide-icon {
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+        }
+        
+        .navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .navigation a {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        
+        .navigation a:hover {
+            background-color: #333;
+        }
+    </style>
+    <!-- Error tracking script -->
+    <script src="error-tracking.js"></script>
+    <!-- Include React and ReactDOM from CDN for development -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- Include Babel for JSX support -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Include Lucide icons with proper initialization -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <!-- Load our React component with Babel transformation -->
+    <script type="text/babel" src="icon-test.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Icon test initialization script loaded');
+            
+            // Check for required dependencies
+            if (!window.React) {
+                console.error('React not loaded');
+                showErrorMessage('React library not loaded');
+                return;
+            }
+            
+            if (!window.ReactDOM) {
+                console.error('ReactDOM not loaded');
+                showErrorMessage('ReactDOM library not loaded');
+                return;
+            }
+            
+            if (!window.lucide) {
+                console.warn('Lucide icons not loaded, attempting to load');
+                loadScript('https://unpkg.com/lucide@latest/dist/umd/lucide.min.js', initializeApp);
+            } else {
+                initializeApp();
+            }
+            
+            function initializeApp() {
+                try {
+                    console.log('Initializing icon test...');
+                    // Use createRoot API for React 18
+                    const root = ReactDOM.createRoot(document.getElementById('root'));
+                    // Check if IconTest component is available
+                    if (window.IconTest) {
+                        root.render(React.createElement(window.IconTest));
+                        console.log('IconTest rendered successfully');
+                    } else {
+                        console.error('IconTest component not found');
+                        showErrorMessage('IconTest component not found');
+                    }
+                } catch (error) {
+                    console.error('Error initializing IconTest:', error);
+                    showErrorMessage(`Error initializing app: ${error.message}`);
+                }
+            }
+            
+            function loadScript(src, callback) {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = callback;
+                script.onerror = function() {
+                    console.error('Failed to load script:', src);
+                    showErrorMessage(`Failed to load required script: ${src}`);
+                };
+                document.head.appendChild(script);
+            }
+            
+            function showErrorMessage(message) {
+                const errorDisplay = document.createElement('div');
+                errorDisplay.className = 'error-display';
+                errorDisplay.innerHTML = `
+                    <div class="error-message">
+                        <h3>Something went wrong</h3>
+                        <p>${message}</p>
+                        <p>Check the console for more details</p>
+                        <button id="reload-app">Reload App</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(errorDisplay);
+                
+                document.getElementById('reload-app')?.addEventListener('click', function() {
+                    window.location.reload();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

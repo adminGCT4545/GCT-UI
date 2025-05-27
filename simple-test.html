@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCT UI - Simple Mobile Test</title>
+    <link rel="stylesheet" href="mobile-styles.css">
+    <link rel="stylesheet" href="error-styles.css">
+    <style>
+        .simple-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+            background-color: #0f0f0f;
+            color: white;
+        }
+        
+        .simple-app h1 {
+            margin-bottom: 20px;
+        }
+        
+        .simple-app button {
+            background-color: #0084ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+        
+        .version-info {
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #aaa;
+        }
+        
+        .navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .navigation a {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-bottom: 10px;
+        }
+        
+        .navigation a:hover {
+            background-color: #333;
+        }
+    </style>
+    <!-- Error tracking script -->
+    <script src="error-tracking.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <!-- Load dependencies in the correct order -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Load our simple app component -->
+    <script type="text/babel" src="simple-app.js"></script>
+    
+    <!-- Initialize the app -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Simple test initialization...');
+            
+            try {
+                console.log('React version:', React.version);
+                console.log('ReactDOM version:', ReactDOM.version);
+                
+                // Use createRoot API for React 18
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                
+                // Check if SimpleApp component is available
+                if (window.SimpleApp) {
+                    root.render(React.createElement(window.SimpleApp));
+                    console.log('SimpleApp rendered successfully');
+                } else {
+                    console.error('SimpleApp component not found');
+                    showErrorMessage('SimpleApp component not found');
+                }
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showErrorMessage(`Error initializing app: ${error.message}`);
+            }
+            
+            function showErrorMessage(message) {
+                const errorDisplay = document.createElement('div');
+                errorDisplay.className = 'error-display';
+                errorDisplay.innerHTML = `
+                    <div class="error-message">
+                        <h3>Something went wrong</h3>
+                        <p>${message}</p>
+                        <p>Check the console for more details</p>
+                        <div style="display:flex;gap:10px;justify-content:center;margin-top:15px;">
+                            <button id="reload-app">Reload App</button>
+                            <button id="back-to-selector">Back to Selector</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(errorDisplay);
+                
+                document.getElementById('reload-app')?.addEventListener('click', function() {
+                    window.location.reload();
+                });
+                
+                document.getElementById('back-to-selector')?.addEventListener('click', function() {
+                    window.location.href = 'selector.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

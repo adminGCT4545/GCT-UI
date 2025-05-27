@@ -1,0 +1,1413 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { MessageCircle, Settings, StickyNote, BarChart2, ChevronLeft, X, Paperclip, Send, Plus, Camera } from 'lucide-react';
+
+// Config context to handle platform-specific styling
+const PlatformContext = React.createContext('ios');
+
+const App = () => {
+  const [platform, setPlatform] = useState('ios'); // 'ios' or 'android'
+  const [activePanel, setActivePanel] = useState('chat');
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showFileUpload, setShowFileUpload] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  // Toggle between iOS and Android for demo purposes
+  const togglePlatform = () => {
+    setPlatform(platform === 'ios' ? 'android' : 'ios');
+  };
+
+  // Initial welcome message
+  useEffect(() => {
+    setMessages([
+      {
+        id: 1,
+        type: 'ai',
+        content: "Hello! Welcome to GCT UI. I'm connected to LM Studio and ready to assist you.",
+        suggestions: [
+          "What can you help me with?",
+          "How do I use LM Studio with this interface?",
+          "Tell me about GCT UI features"
+        ],
+        timestamp: new Date()
+      }
+    ]);
+  }, []);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Send a message
+  const sendMessage = (text = inputText) => {
+    if (!text.trim()) return;
+    
+    // Add user message
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      type: 'user',
+      content: text,
+      timestamp: new Date()
+    }]);
+    
+    setInputText('');
+    setLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setLoading(false);
+      
+      // Add AI response
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        type: 'ai',
+        content: "I understand your message. In a real environment, I would connect to LM Studio API to provide a more specific response.",
+        suggestions: ["Tell me more", "How does that work?", "Can you explain further?"],
+        timestamp: new Date()
+      }]);
+    }, 1500);
+  };
+
+  return (
+    <PlatformContext.Provider value={platform}>
+      <div className="app-container">
+        {/* Platform toggle button (for demo purposes) */}
+        <div className="platform-toggle">
+          <button onClick={togglePlatform} className="platform-toggle-btn">
+            {platform === 'ios' ? 'Switch to Android' : 'Switch to iOS'}
+          </button>
+        </div>
+        
+        <MobileApp 
+          activePanel={activePanel}
+          setActivePanel={setActivePanel}
+          messages={messages}
+          inputText={inputText}
+          setInputText={setInputText}
+          sendMessage={sendMessage}
+          loading={loading}
+          messagesEndRef={messagesEndRef}
+          showFileUpload={showFileUpload}
+          setShowFileUpload={setShowFileUpload}
+        />
+      </div>
+    </PlatformContext.Provider>
+  );
+};
+
+const MobileApp = ({ 
+  activePanel, 
+  setActivePanel, 
+  messages, 
+  inputText, 
+  setInputText, 
+  sendMessage, 
+  loading,
+  messagesEndRef,
+  showFileUpload,
+  setShowFileUpload
+}) => {
+  const platform = React.useContext(PlatformContext);
+  
+  return (
+    <div className={`mobile-container ${platform}`}>
+      <div className="mobile-frame">
+        {/* Status bar - platform specific */}
+        <StatusBar platform={platform} />
+        
+        {/* Mobile app content */}
+        <div className="mobile-content">
+          {activePanel === 'chat' && (
+            <ChatPanel 
+              messages={messages} 
+              inputText={inputText}
+              setInputText={setInputText}
+              sendMessage={sendMessage}
+              loading={loading}
+              messagesEndRef={messagesEndRef}
+              showFileUpload={showFileUpload}
+              setShowFileUpload={setShowFileUpload}
+            />
+          )}
+          
+          {activePanel === 'notes' && <NotesPanel />}
+          
+          {activePanel === 'settings' && <SettingsPanel />}
+          
+          {activePanel === 'stats' && <StatsPanel />}
+          
+          {/* Bottom navigation */}
+          <BottomNavigation activePanel={activePanel} setActivePanel={setActivePanel} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StatusBar = ({ platform }) => {
+  // Get current time for status bar
+  const [time, setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    }, 60000);
+    
+    return () => clearInterval(timer);
+  }, []);
+  
+  if (platform === 'ios') {
+    return (
+      <div className="status-bar ios-status">
+        <div className="status-bar-time">{time}</div>
+        <div className="status-bar-icons">
+          <div className="signal-icon"></div>
+          <div className="wifi-icon"></div>
+          <div className="battery-icon"></div>
+        </div>
+      </div>
+    );
+  } else {
+    return (
+      <div className="status-bar android-status">
+        <div className="status-bar-icons-left">
+          <div className="signal-icon"></div>
+          <div className="wifi-icon"></div>
+        </div>
+        <div className="status-bar-time">{time}</div>
+        <div className="status-bar-icons-right">
+          <div className="battery-icon"></div>
+        </div>
+      </div>
+    );
+  }
+};
+
+const ChatPanel = ({ 
+  messages, 
+  inputText, 
+  setInputText, 
+  sendMessage, 
+  loading,
+  messagesEndRef,
+  showFileUpload,
+  setShowFileUpload
+}) => {
+  const platform = React.useContext(PlatformContext);
+  const [uploadType, setUploadType] = useState('file'); // 'file' or 'camera'
+  
+  const handleFileUpload = (type) => {
+    setUploadType(type);
+    setShowFileUpload(true);
+  };
+  
+  return (
+    <div className="chat-panel">
+      <div className="chat-header">
+        <div className="logo">
+          <h2>GCT UI</h2>
+          <p>Green Chip Technology</p>
+        </div>
+      </div>
+      
+      <div className="messages-container">
+        {messages.map(message => (
+          <Message key={message.id} message={message} sendMessage={sendMessage} />
+        ))}
+        
+        {loading && (
+          <div className="message ai loading">
+            <div className="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        )}
+        
+        <div ref={messagesEndRef} />
+      </div>
+      
+      <div className="input-area">
+        <div className="input-container">
+          <div className="attachment-options">
+            <button 
+              className="attachment-btn" 
+              onClick={() => handleFileUpload('file')}
+              title="Upload a file"
+            >
+              <Paperclip size={18} />
+            </button>
+            <button 
+              className="camera-btn" 
+              onClick={() => handleFileUpload('camera')}
+              title="Take a photo"
+            >
+              <Camera size={18} />
+            </button>
+          </div>
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="Type your message..."
+            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+          />
+          <button 
+            className="send-btn"
+            onClick={() => sendMessage()}
+            disabled={!inputText.trim()}
+          >
+            <Send size={18} />
+          </button>
+        </div>
+      </div>
+      
+      {showFileUpload && (
+        <FileUploadModal 
+          uploadType={uploadType} 
+          closeModal={() => setShowFileUpload(false)} 
+        />
+      )}
+    </div>
+  );
+};
+
+const Message = ({ message, sendMessage }) => {
+  return (
+    <div className={`message ${message.type}`}>
+      <div className="message-content">{message.content}</div>
+      
+      {message.suggestions && (
+        <div className="suggestions">
+          {message.suggestions.map((suggestion, index) => (
+            <button 
+              key={index} 
+              className="suggestion-btn"
+              onClick={() => sendMessage(suggestion)}
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const NotesPanel = () => {
+  const [notes, setNotes] = useState([
+    {
+      id: 1,
+      title: 'Meeting Notes',
+      content: 'Discussed project timeline and resource allocation...',
+      tags: ['work', 'meeting'],
+      date: '2025-05-15'
+    },
+    {
+      id: 2,
+      title: 'Shopping List',
+      content: 'Milk, eggs, bread, vegetables...',
+      tags: ['personal'],
+      date: '2025-05-18'
+    }
+  ]);
+  
+  return (
+    <div className="notes-panel">
+      <div className="notes-header">
+        <h2>Notes</h2>
+        <button className="new-note-btn">
+          <Plus size={18} />
+        </button>
+      </div>
+      
+      <div className="notes-search">
+        <input type="text" placeholder="Search notes..." />
+      </div>
+      
+      <div className="notes-list">
+        {notes.map(note => (
+          <div key={note.id} className="note-item">
+            <h3 className="note-title">{note.title}</h3>
+            <p className="note-preview">{note.content.substring(0, 60)}...</p>
+            <div className="note-meta">
+              <span className="note-date">{note.date}</span>
+              <span className="note-tags">{note.tags.join(', ')}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SettingsPanel = () => {
+  return (
+    <div className="settings-panel">
+      <div className="settings-header">
+        <h2>Settings</h2>
+      </div>
+      
+      <div className="settings-section">
+        <h3>Response Style</h3>
+        <div className="radio-option">
+          <input type="radio" id="style-professional" name="response-style" value="professional" />
+          <label htmlFor="style-professional">Professional</label>
+        </div>
+        <div className="radio-option">
+          <input type="radio" id="style-concise" name="response-style" value="concise" />
+          <label htmlFor="style-concise">Concise</label>
+        </div>
+        <div className="radio-option">
+          <input type="radio" id="style-normal" name="response-style" value="normal" defaultChecked />
+          <label htmlFor="style-normal">Normal</label>
+        </div>
+        <div className="radio-option">
+          <input type="radio" id="style-creative" name="response-style" value="creative" />
+          <label htmlFor="style-creative">Creative</label>
+        </div>
+      </div>
+      
+      <div className="settings-section">
+        <h3>Features</h3>
+        <div className="checkbox-option">
+          <input type="checkbox" id="smart-suggestions" defaultChecked />
+          <label htmlFor="smart-suggestions">Show Smart Suggestions</label>
+        </div>
+      </div>
+      
+      <div className="settings-section">
+        <h3>Active Model</h3>
+        <div className="model-display">llama-3.2-3b-instruct</div>
+      </div>
+      
+      <div className="settings-section">
+        <h3>Conversation History</h3>
+        <button className="action-button danger">Clear Conversation History</button>
+      </div>
+    </div>
+  );
+};
+
+const StatsPanel = () => {
+  return (
+    <div className="stats-panel">
+      <div className="stats-header">
+        <h2>Stats</h2>
+      </div>
+      
+      <div className="stats-content">
+        <div className="stats-section">
+          <h3>Usage Stats</h3>
+          <div className="stats-grid">
+            <div className="stat-item">
+              <div className="stat-label">1st token</div>
+              <div className="stat-value">23.01</div>
+              <div className="stat-unit">ms</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-label">Prefill speed</div>
+              <div className="stat-value">11.52</div>
+              <div className="stat-unit">tokens/s</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-label">Decode speed</div>
+              <div className="stat-value">12.33</div>
+              <div className="stat-unit">tokens/s</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-label">Latency</div>
+              <div className="stat-value">25.52</div>
+              <div className="stat-unit">ms</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const BottomNavigation = ({ activePanel, setActivePanel }) => {
+  const platform = React.useContext(PlatformContext);
+  
+  return (
+    <div className={`bottom-navigation ${platform}`}>
+      <div 
+        className={`nav-item ${activePanel === 'chat' ? 'active' : ''}`}
+        onClick={() => setActivePanel('chat')}
+      >
+        <MessageCircle size={20} />
+        {platform === 'android' && <span>Chat</span>}
+      </div>
+      <div 
+        className={`nav-item ${activePanel === 'notes' ? 'active' : ''}`}
+        onClick={() => setActivePanel('notes')}
+      >
+        <StickyNote size={20} />
+        {platform === 'android' && <span>Notes</span>}
+      </div>
+      <div 
+        className={`nav-item ${activePanel === 'settings' ? 'active' : ''}`}
+        onClick={() => setActivePanel('settings')}
+      >
+        <Settings size={20} />
+        {platform === 'android' && <span>Settings</span>}
+      </div>
+      <div 
+        className={`nav-item ${activePanel === 'stats' ? 'active' : ''}`}
+        onClick={() => setActivePanel('stats')}
+      >
+        <BarChart2 size={20} />
+        {platform === 'android' && <span>Stats</span>}
+      </div>
+    </div>
+  );
+};
+
+const FileUploadModal = ({ uploadType = 'file', closeModal }) => {
+  const platform = React.useContext(PlatformContext);
+  const [dragActive, setDragActive] = useState(false);
+  const [capturedImage, setCapturedImage] = useState(null);
+  const fileInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [cameraError, setCameraError] = useState(null);
+  
+  useEffect(() => {
+    // If camera mode, initialize the camera
+    if (uploadType === 'camera') {
+      initCamera();
+    }
+    
+    // Cleanup function to stop camera when component unmounts
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [uploadType]);
+  
+  const initCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      
+      setCameraStream(stream);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error('Error accessing camera:', err);
+      setCameraError('Could not access camera. Please check permissions.');
+    }
+  };
+  
+  const handleCameraCapture = () => {
+    if (!videoRef.current) return;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    
+    // Get the image as data URL
+    const imageDataUrl = canvas.toDataURL('image/jpeg');
+    setCapturedImage(imageDataUrl);
+    
+    // Stop the camera stream
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+  };
+  
+  const retakePhoto = () => {
+    setCapturedImage(null);
+    initCamera();
+  };
+  
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+  
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFiles(files);
+    }
+  };
+  
+  const handleFiles = (files) => {
+    // In a real app, you would process the file here
+    console.log('Selected file:', files[0]);
+    // Display preview, etc.
+  };
+  
+  const promptFileSelection = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  return (
+    <div className={`file-upload-modal ${platform}`}>
+      <div className="modal-overlay" onClick={closeModal}></div>
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2>{uploadType === 'camera' ? 'Take a Photo' : 'Upload Image'}</h2>
+          <button className="close-modal" onClick={closeModal}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div className="modal-body">
+          {uploadType === 'file' ? (
+            <div 
+              className={`upload-area ${dragActive ? 'drag-active' : ''}`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={promptFileSelection}
+            >
+              <p>Drag & drop an image or click to browse</p>
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                accept="image/*" 
+                style={{ display: 'none' }} 
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+            </div>
+          ) : (
+            <div className="camera-container">
+              {cameraError ? (
+                <div className="camera-error">
+                  <p>{cameraError}</p>
+                </div>
+              ) : capturedImage ? (
+                <div className="captured-image-container">
+                  <img 
+                    src={capturedImage} 
+                    alt="Captured" 
+                    className="captured-image" 
+                  />
+                </div>
+              ) : (
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  className="camera-preview"
+                />
+              )}
+            </div>
+          )}
+        </div>
+        
+        <div className="modal-footer">
+          <button className="cancel-btn" onClick={closeModal}>Cancel</button>
+          
+          {uploadType === 'camera' ? (
+            capturedImage ? (
+              <>
+                <button className="retake-btn" onClick={retakePhoto}>Retake</button>
+                <button className="upload-btn">Use Photo</button>
+              </>
+            ) : (
+              <button className="capture-btn" onClick={handleCameraCapture}>
+                Capture
+              </button>
+            )
+          ) : (
+            <button className="upload-btn">Upload</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Add CSS styles
+const style = document.createElement('style');
+style.textContent = `
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  body {
+    background-color: #f5f5f5;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  .app-container {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .platform-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+  
+  .platform-toggle-btn {
+    background-color: #0084ff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .mobile-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+  
+  .mobile-frame {
+    width: 360px;
+    height: 720px;
+    background-color: #0f0f0f;
+    border-radius: 36px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+  
+  .mobile-container.ios .mobile-frame {
+    border-radius: 40px;
+  }
+  
+  .mobile-content {
+    height: calc(100% - 25px);
+    margin-top: 25px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Status Bar Styles */
+  .status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 25px;
+    padding: 0 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #0f0f0f;
+    color: #fff;
+    font-size: 12px;
+    z-index: 10;
+  }
+  
+  .ios-status {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+  
+  .android-status {
+    justify-content: space-between;
+  }
+  
+  .status-bar-time {
+    font-weight: 600;
+  }
+  
+  .status-bar-icons {
+    display: flex;
+    gap: 5px;
+  }
+  
+  /* iOS specific notch area */
+  .ios .status-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 24px;
+    background-color: #0f0f0f;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+    z-index: 1;
+  }
+  
+  /* Chat Panel Styles */
+  .chat-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #0f0f0f;
+  }
+  
+  .chat-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid #2a2a2a;
+    background-color: #1e1e1e;
+  }
+  
+  .logo h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 2px;
+  }
+  
+  .logo p {
+    font-size: 10px;
+    color: #aaa;
+  }
+  
+  .messages-container {
+    flex-grow: 1;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .message {
+    max-width: 85%;
+    padding: 12px;
+    border-radius: 16px;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+  
+  .message.ai {
+    background-color: #2a2a2a;
+    align-self: flex-start;
+    color: #e0e0e0;
+    border-bottom-left-radius: 4px;
+  }
+  
+  .message.user {
+    background-color: #0084ff;
+    align-self: flex-end;
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+  }
+  
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  
+  .suggestion-btn {
+    background-color: #3a3a3a;
+    border: 1px solid #4a4a4a;
+    color: #e0e0e0;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+  }
+  
+  .suggestion-btn:hover {
+    background-color: #4a4a4a;
+  }
+  
+  .input-area {
+    padding: 10px 16px;
+    border-top: 1px solid #2a2a2a;
+    background-color: #1a1a1a;
+  }
+  
+  .input-container {
+    display: flex;
+    align-items: center;
+    background-color: #2a2a2a;
+    border-radius: 20px;
+    padding: 4px 8px;
+  }
+  
+  .attachment-options {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .attachment-btn, .camera-btn {
+    background: none;
+    border: none;
+    color: #666;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  
+  .attachment-btn:hover, .camera-btn:hover {
+    color: #aaa;
+    background-color: #333;
+  }
+  
+  .input-container input {
+    flex-grow: 1;
+    background: none;
+    border: none;
+    color: #ffffff;
+    padding: 8px;
+    font-size: 14px;
+    outline: none;
+  }
+  
+  .input-container input::placeholder {
+    color: #666;
+  }
+  
+  .send-btn {
+    background-color: #0084ff;
+    border: none;
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  
+  .send-btn:disabled {
+    background-color: #2a2a2a;
+    color: #444;
+    cursor: not-allowed;
+  }
+  
+  /* Bottom Navigation Styles */
+  .bottom-navigation {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #1e1e1e;
+    border-top: 1px solid #2a2a2a;
+    height: 56px;
+    width: 100%;
+  }
+  
+  .ios .bottom-navigation {
+    height: 70px;
+    padding-bottom: 14px;
+  }
+  
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    height: 100%;
+    flex: 1;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  
+  .android .nav-item {
+    gap: 4px;
+  }
+  
+  .android .nav-item span {
+    font-size: 12px;
+  }
+  
+  .nav-item.active {
+    color: #0084ff;
+  }
+  
+  /* Loading / Typing indicator */
+  .loading .typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 6px 10px;
+  }
+  
+  .typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background-color: #777;
+    border-radius: 50%;
+    animation: typingAnimation 1.4s infinite ease-in-out both;
+  }
+  
+  .typing-indicator span:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  
+  .typing-indicator span:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+  
+  @keyframes typingAnimation {
+    0%, 80%, 100% { 
+      transform: scale(0);
+    } 40% { 
+      transform: scale(1);
+    }
+  }
+  
+  /* Notes Panel Styles */
+  .notes-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #0f0f0f;
+    color: #ffffff;
+  }
+  
+  .notes-header {
+    padding: 16px;
+    border-bottom: 1px solid #2a2a2a;
+    background-color: #1e1e1e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .notes-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .new-note-btn {
+    width: 32px;
+    height: 32px;
+    background-color: #0084ff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  
+  .notes-search {
+    padding: 10px 16px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  
+  .notes-search input {
+    width: 100%;
+    background-color: #2a2a2a;
+    border: none;
+    border-radius: 16px;
+    color: #fff;
+    padding: 8px 16px;
+    font-size: 14px;
+    outline: none;
+  }
+  
+  .notes-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  
+  .note-item {
+    padding: 12px;
+    margin-bottom: 12px;
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .note-title {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  
+  .note-preview {
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 8px;
+  }
+  
+  .note-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #666;
+  }
+  
+  /* Settings Panel Styles */
+  .settings-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #0f0f0f;
+    color: #ffffff;
+    overflow-y: auto;
+  }
+  
+  .settings-header {
+    padding: 16px;
+    border-bottom: 1px solid #2a2a2a;
+    background-color: #1e1e1e;
+  }
+  
+  .settings-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .settings-section {
+    padding: 16px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  
+  .settings-section h3 {
+    font-size: 14px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+  
+  .radio-option, .checkbox-option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  
+  .radio-option input, .checkbox-option input {
+    margin-right: 10px;
+  }
+  
+  .model-display {
+    background-color: #2a2a2a;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  
+  .action-button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .action-button.danger {
+    background-color: #e74c3c;
+    color: white;
+  }
+  
+  /* Stats Panel Styles */
+  .stats-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #0f0f0f;
+    color: #ffffff;
+    overflow-y: auto;
+  }
+  
+  .stats-header {
+    padding: 16px;
+    border-bottom: 1px solid #2a2a2a;
+    background-color: #1e1e1e;
+  }
+  
+  .stats-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .stats-content {
+    padding: 16px;
+  }
+  
+  .stats-section {
+    margin-bottom: 20px;
+  }
+  
+  .stats-section h3 {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 12px;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .stat-item {
+    background-color: #2a2a2a;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  
+  .stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+  }
+  
+  .stat-unit {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+  }
+  
+  /* File Upload Modal */
+  .file-upload-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+  
+  .modal-content {
+    width: 90%;
+    max-width: 320px;
+    background-color: #1a1a1a;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1001;
+  }
+  
+  .ios .modal-content {
+    border-radius: 14px;
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  
+  .modal-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  .close-modal {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+  }
+  
+  .modal-body {
+    padding: 16px;
+  }
+  
+  .upload-area {
+    border: 2px dashed #3a3a3a;
+    border-radius: 8px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .upload-area.drag-active {
+    border-color: #0084ff;
+    background-color: rgba(0, 132, 255, 0.05);
+  }
+  
+  .upload-area p {
+    color: #888;
+    font-size: 14px;
+  }
+  
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px;
+    border-top: 1px solid #2a2a2a;
+    gap: 10px;
+  }
+  
+  .cancel-btn {
+    background-color: #3a3a3a;
+    border: none;
+    color: #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  .upload-btn {
+    background-color: #0084ff;
+    border: none;
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  /* Adjustments for Android vs iOS */
+  .ios .message.ai {
+    border-bottom-left-radius: 6px;
+  }
+  
+  .ios .message.user {
+    border-bottom-right-radius: 6px;
+  }
+  
+  .android .message {
+    border-radius: 12px;
+  }
+  
+  .android .message.ai {
+    border-top-left-radius: 4px;
+  }
+  
+  .android .message.user {
+    border-top-right-radius: 4px;
+  }
+  
+  .ios .upload-area {
+    border-radius: 12px;
+  }
+  
+  .android .input-container {
+    border-radius: 24px;
+  }
+  
+  .ios .input-container {
+    border-radius: 18px;
+  }
+  
+  /* Camera styles */
+  .camera-container {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #000;
+    position: relative;
+    min-height: 200px;
+  }
+  
+  .camera-preview {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  .camera-error {
+    padding: 30px;
+    text-align: center;
+    color: #e74c3c;
+  }
+  
+  .captured-image-container {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .captured-image {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  .capture-btn {
+    background-color: #0084ff;
+    border: none;
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  .retake-btn {
+    background-color: #3a3a3a;
+    border: none;
+    color: #e0e0e0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 400px) {
+    .mobile-frame {
+      width: 100%;
+      height: 100vh;
+      border-radius: 0;
+    }
+  }
+`;
+
+document.head.appendChild(style);
+
+export default App;

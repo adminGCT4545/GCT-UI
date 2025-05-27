@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCT UI - Mobile VLM</title>
+    <link rel="stylesheet" href="mobile-styles.css">
+    <link rel="stylesheet" href="error-styles.css">
+    <!-- Load configuration -->
+    <script src="config.js"></script>
+    <!-- Error tracking script -->
+    <script src="error-tracking.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <!-- Load dependencies in the correct order -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Direct React component implementation -->
+    <script>
+        // Define App and components in global scope to ensure proper initialization
+        (function(global) {
+            console.log('Initializing mobile.js with global React:', !!window.React);
+            console.log('Initializing mobile.js with global ReactDOM:', !!window.ReactDOM);
+            console.log('Initializing mobile.js with global lucide:', !!window.lucide);
+
+            const { useState, useEffect, useRef, createContext, useContext } = React;
+            const { createElement: h } = React;
+
+            // Enable more verbose logging for development
+            const DEBUG = true;
+            const log = (message, ...args) => {
+                if (DEBUG) {
+                    console.log(`[Mobile UI] ${message}`, ...args);
+                }
+            };
+
+            // Icon components implementation
+            function Icon({ name, size = 24 }) {
+                const iconRef = useRef(null);
+                
+                useEffect(() => {
+                    if (iconRef.current && window.lucide) {
+                        try {
+                            iconRef.current.innerHTML = '';
+                            window.lucide.createIcons({
+                                icons: { [name]: true },
+                                attrs: { width: size, height: size },
+                                elementId: iconRef.current
+                            });
+                        } catch (error) {
+                            console.error(`Error creating icon '${name}':`, error);
+                            iconRef.current.innerHTML = `<span style="display:inline-block;width:${size}px;height:${size}px;background:#333;border-radius:4px;"></span>`;
+                        }
+                    }
+                }, [name, size]);
+
+                return h('span', { ref: iconRef, className: "lucide-icon" });
+            }
+
+            // Icon component shortcuts
+            function MessageCircle(props) { return h(Icon, { name: "message-circle", ...props }); }
+            function Settings(props) { return h(Icon, { name: "settings", ...props }); }
+            function StickyNote(props) { return h(Icon, { name: "sticky-note", ...props }); }
+            function BarChart2(props) { return h(Icon, { name: "bar-chart-2", ...props }); }
+            function ChevronLeft(props) { return h(Icon, { name: "chevron-left", ...props }); }
+            function X(props) { return h(Icon, { name: "x", ...props }); }
+            function Paperclip(props) { return h(Icon, { name: "paperclip", ...props }); }
+            function Send(props) { return h(Icon, { name: "send", ...props }); }
+            function Plus(props) { return h(Icon, { name: "plus", ...props }); }
+            function Camera(props) { return h(Icon, { name: "camera", ...props }); }
+
+            // Platform context
+            const PlatformContext = createContext('ios');
+
+            function StatusBar({ platform }) {
+                const [time, setTime] = useState(() =>
+                    new Date().toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: platform === 'ios'
+                    })
+                );
+                
+                useEffect(() => {
+                    const updateTime = () => {
+                        setTime(new Date().toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: platform === 'ios'
+                        }));
+                    };
+                    const timer = setInterval(updateTime, 60000);
+                    return () => clearInterval(timer);
+                }, [platform]);
+
+                return h('div', { className: `status-bar ${platform}-status` },
+                    platform === 'ios' ? [
+                        h('div', { className: 'status-bar-time', key: 'time' }, time),
+                        h('div', { className: 'status-bar-icons', key: 'icons' }, [
+                            h('div', { className: 'signal-icon', key: 'signal' }),
+                            h('div', { className: 'wifi-icon', key: 'wifi' }),
+                            h('div', { className: 'battery-icon', key: 'battery' })
+                        ])
+                    ] : [
+                        h('div', { className: 'status-bar-icons-left', key: 'left' }, [
+                            h('div', { className: 'signal-icon', key: 'signal' }),
+                            h('div', { className: 'wifi-icon', key: 'wifi' })
+                        ]),
+                        h('div', { className: 'status-bar-time', key: 'time' }, time),
+                        h('div', { className: 'status-bar-icons-right', key: 'right' },
+                            h('div', { className: 'battery-icon', key: 'battery' })
+                        )
+                    ]
+                );
+            }
+
+            function Message({ message, sendMessage, platform }) {
+                const { type, content, suggestions, timestamp } = message;
+
+                const renderTimestamp = () => {
+                    if (!timestamp) return null;
+                    return h('span', { className: 'message-time' },
+                        new Date(timestamp).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: platform === 'ios'
+                        })
+                    );
+                };
+
+                const renderSuggestions = () => {
+                    if (!suggestions?.length) return null;
+                    return h('div', { className: 'suggestions' },
+                        suggestions.map((suggestion, index) =>
+                            h('button', {
+                                key: `${suggestion.slice(0, 10)}-${index}`,
+                                className: `suggestion-btn ${platform}`,
+                                onClick: () => sendMessage(suggestion)
+                            }, suggestion)
+                        )
+                    );
+                };
+
+                return h('div', { className: `message ${type} ${platform}` },
+                    h('div', { className: 'message-content' }, [
+                        content,
+                        renderTimestamp()
+                    ]),
+                    renderSuggestions()
+                );
+            }
+
+            function ChatPanel({ messages, inputText, setInputText, sendMessage, loading, messagesEndRef, showFileUpload, setShowFileUpload }) {
+                const platform = useContext(PlatformContext);
+                const [uploadType, setUploadType] = useState('file');
+
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                };
+
+                return h('div', { className: `chat-panel ${platform}` }, [
+                    // Header
+                    h('div', { className: 'chat-header', key: 'header' }, 
+                        h('div', { className: 'logo' }, [
+                            h('h2', { key: 'title' }, 'GCT UI'),
+                            h('p', { key: 'subtitle' }, 'Green Chip Technology')
+                        ])
+                    ),
+                    
+                    // Messages
+                    h('div', { className: 'messages-container', key: 'messages' }, [
+                        ...messages.map(message =>
+                            h(Message, {
+                                key: message.id,
+                                message,
+                                sendMessage,
+                                platform
+                            })
+                        ),
+                        loading && h('div', { className: 'message ai loading', key: 'loading' },
+                            h('div', { className: 'typing-indicator' }, [
+                                h('span', { key: 1 }),
+                                h('span', { key: 2 }),
+                                h('span', { key: 3 })
+                            ])
+                        ),
+                        h('div', { ref: messagesEndRef, key: 'end' })
+                    ]),
+                    
+                    // Input area
+                    h('div', { className: 'input-area', key: 'input' },
+                        h('div', { className: 'input-container' }, [
+                            h('div', { className: 'attachment-options', key: 'attachments' }, [
+                                h('button', {
+                                    className: 'attachment-btn',
+                                    onClick: () => {
+                                        setUploadType('file');
+                                        setShowFileUpload(true);
+                                    },
+                                    key: 'file'
+                                }, h(Paperclip, { size: 18 })),
+                                h('button', {
+                                    className: 'camera-btn',
+                                    onClick: () => {
+                                        setUploadType('camera');
+                                        setShowFileUpload(true);
+                                    },
+                                    key: 'camera'
+                                }, h(Camera, { size: 18 }))
+                            ]),
+                            h('input', {
+                                type: 'text',
+                                value: inputText,
+                                onChange: (e) => setInputText(e.target.value),
+                                onKeyPress: handleKeyPress,
+                                placeholder: 'Type your message...',
+                                key: 'textInput'
+                            }),
+                            h('button', {
+                                className: 'send-btn',
+                                onClick: () => sendMessage(),
+                                disabled: !inputText.trim(),
+                                key: 'send'
+                            }, h(Send, { size: 18 }))
+                        ])
+                    ),
+                    
+                    // File upload modal
+                    showFileUpload && h(FileUploadModal, {
+                        uploadType,
+                        closeModal: () => setShowFileUpload(false),
+                        key: 'modal'
+                    })
+                ]);
+            }
+
+            function NotesPanel() {
+                const [notes] = useState([
+                    {
+                        id: 1,
+                        title: 'Meeting Notes',
+                        content: 'Discussed project timeline and resource allocation...',
+                        tags: ['work', 'meeting'],
+                        date: '2025-05-15'
+                    },
+                    {
+                        id: 2,
+                        title: 'Shopping List',
+                        content: 'Milk, eggs, bread, vegetables...',
+                        tags: ['personal'],
+                        date: '2025-05-18'
+                    }
+                ]);
+
+                return h('div', { className: 'notes-panel' }, [
+                    h('div', { className: 'notes-header', key: 'header' }, [
+                        h('h2', null, 'Notes'),
+                        h('button', { className: 'new-note-btn' },
+                            h(Plus, { size: 18 })
+                        )
+                    ]),
+                    h('div', { className: 'notes-search', key: 'search' },
+                        h('input', { type: 'text', placeholder: 'Search notes...' })
+                    ),
+                    h('div', { className: 'notes-list', key: 'list' },
+                        notes.map(note =>
+                            h('div', { key: note.id, className: 'note-item' }, [
+                                h('h3', { className: 'note-title' }, note.title),
+                                h('p', { className: 'note-preview' }, 
+                                    note.content.substring(0, 60) + '...'
+                                ),
+                                h('div', { className: 'note-meta' }, [
+                                    h('span', { className: 'note-date' }, note.date),
+                                    h('span', { className: 'note-tags' }, 
+                                        note.tags.join(', ')
+                                    )
+                                ])
+                            ])
+                        )
+                    )
+                ]);
+            }
+
+            function SettingsPanel() {
+                return h('div', { className: 'settings-panel' }, [
+                    h('div', { className: 'settings-header' },
+                        h('h2', null, 'Settings')
+                    ),
+                    h('div', { className: 'settings-section' }, [
+                        h('h3', null, 'Response Style'),
+                        h('div', { className: 'radio-option' }, [
+                            h('input', { type: 'radio', id: 'style-professional', name: 'response-style', value: 'professional' }),
+                            h('label', { htmlFor: 'style-professional' }, 'Professional')
+                        ]),
+                        h('div', { className: 'radio-option' }, [
+                            h('input', { type: 'radio', id: 'style-concise', name: 'response-style', value: 'concise' }),
+                            h('label', { htmlFor: 'style-concise' }, 'Concise')
+                        ])
+                    ]),
+                    h('div', { className: 'settings-section' }, [
+                        h('h3', null, 'Features'),
+                        h('div', { className: 'checkbox-option' }, [
+                            h('input', { type: 'checkbox', id: 'smart-suggestions', defaultChecked: true }),
+                            h('label', { htmlFor: 'smart-suggestions' }, 'Show Smart Suggestions')
+                        ])
+                    ])
+                ]);
+            }
+
+            function StatsPanel() {
+                return h('div', { className: 'stats-panel' }, [
+                    h('div', { className: 'stats-header' },
+                        h('h2', null, 'Stats')
+                    ),
+                    h('div', { className: 'stats-content' },
+                        h('div', { className: 'stats-section' }, [
+                            h('h3', null, 'Usage Stats'),
+                            h('div', { className: 'stats-grid' }, [
+                                h('div', { className: 'stat-item' }, [
+                                    h('div', { className: 'stat-label' }, '1st token'),
+                                    h('div', { className: 'stat-value' }, '23.01'),
+                                    h('div', { className: 'stat-unit' }, 'ms')
+                                ]),
+                                h('div', { className: 'stat-item' }, [
+                                    h('div', { className: 'stat-label' }, 'Prefill speed'),
+                                    h('div', { className: 'stat-value' }, '11.52'),
+                                    h('div', { className: 'stat-unit' }, 'tokens/s')
+                                ])
+                            ])
+                        ])
+                    )
+                ]);
+            }
+
+            function BottomNavigation({ activePanel, setActivePanel }) {
+                const platform = useContext(PlatformContext);
+                const handlePanelChange = (newPanel) => {
+                    log('Navigation clicked', { from: activePanel, to: newPanel });
+                    setActivePanel(newPanel);
+                };
+
+                return h('div', { className: `bottom-navigation ${platform}` }, [
+                    h('div', {
+                        className: `nav-item ${activePanel === 'chat' ? 'active' : ''}`,
+                        onClick: () => handlePanelChange('chat'),
+                        key: 'chat'
+                    }, [
+                        h(MessageCircle, { size: 20 }),
+                        platform === 'android' && h('span', null, 'Chat')
+                    ]),
+                    h('div', {
+                        className: `nav-item ${activePanel === 'notes' ? 'active' : ''}`,
+                        onClick: () => handlePanelChange('notes'),
+                        key: 'notes'
+                    }, [
+                        h(StickyNote, { size: 20 }),
+                        platform === 'android' && h('span', null, 'Notes')
+                    ]),
+                    h('div', {
+                        className: `nav-item ${activePanel === 'settings' ? 'active' : ''}`,
+                        onClick: () => handlePanelChange('settings'),
+                        key: 'settings'
+                    }, [
+                        h(Settings, { size: 20 }),
+                        platform === 'android' && h('span', null, 'Settings')
+                    ]),
+                    h('div', {
+                        className: `nav-item ${activePanel === 'stats' ? 'active' : ''}`,
+                        onClick: () => handlePanelChange('stats'),
+                        key: 'stats'
+                    }, [
+                        h(BarChart2, { size: 20 }),
+                        platform === 'android' && h('span', null, 'Stats')
+                    ])
+                ]);
+            }
+
+            function MobileApp({
+                activePanel,
+                setActivePanel,
+                messages,
+                inputText,
+                setInputText,
+                sendMessage,
+                loading,
+                messagesEndRef,
+                showFileUpload,
+                setShowFileUpload
+            }) {
+                const platform = useContext(PlatformContext);
+                
+                useEffect(() => {
+                    log('MobileApp mounted', { platform, activePanel });
+                    return () => log('MobileApp unmounted');
+                }, []);
+
+                useEffect(() => {
+                    log('Panel changed', { from: activePanel, platform });
+                }, [activePanel]);
+
+                return h('div', { className: `mobile-container ${platform}` },
+                    h('div', { className: 'mobile-frame' }, [
+                        h(StatusBar, { platform, key: 'status' }),
+                        h('div', { className: 'mobile-content', key: 'content' }, [
+                            activePanel === 'chat' && h(ChatPanel, {
+                                messages,
+                                inputText,
+                                setInputText,
+                                sendMessage,
+                                loading,
+                                messagesEndRef,
+                                showFileUpload,
+                                setShowFileUpload,
+                                key: 'chat'
+                            }),
+                            activePanel === 'notes' && h(NotesPanel, { key: 'notes' }),
+                            activePanel === 'settings' && h(SettingsPanel, { key: 'settings' }),
+                            activePanel === 'stats' && h(StatsPanel, { key: 'stats' }),
+                            h(BottomNavigation, {
+                                activePanel,
+                                setActivePanel,
+                                key: 'nav'
+                            })
+                        ])
+                    ])
+                );
+            }
+
+            function App() {
+                const [platform, setPlatform] = useState('ios');
+                const [activePanel, setActivePanel] = useState('chat');
+                const [messages, setMessages] = useState([]);
+                const [inputText, setInputText] = useState('');
+                const [loading, setLoading] = useState(false);
+                const [showFileUpload, setShowFileUpload] = useState(false);
+                const messagesEndRef = useRef(null);
+
+                if (!window.App) {
+                    window.App = App;
+                    log('App component exposed globally');
+                }
+
+                useEffect(() => {
+                    const userAgent = navigator.userAgent.toLowerCase();
+                    setPlatform(userAgent.includes('android') ? 'android' : 'ios');
+                }, []);
+
+                useEffect(() => {
+                    setMessages([{
+                        id: 1,
+                        type: 'ai',
+                        content: "Welcome to GCT UI Mobile. How can I assist you today?",
+                        suggestions: [
+                            "Show available features",
+                            "Get started guide",
+                            "System requirements"
+                        ],
+                        timestamp: new Date()
+                    }]);
+                }, []);
+
+                useEffect(() => {
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }, [messages]);
+
+                const sendMessage = async (text = inputText) => {
+                    if (!text.trim()) return;
+                    
+                    const newMessage = {
+                        id: Date.now(),
+                        type: 'user',
+                        content: text,
+                        timestamp: new Date()
+                    };
+                    
+                    setMessages(prev => [...prev, newMessage]);
+                    setInputText('');
+                    setLoading(true);
+
+                    try {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        
+                        const aiResponse = {
+                            id: Date.now() + 1,
+                            type: 'ai',
+                            content: "I'm processing your request. This is a simulated response for the mobile interface demo.",
+                            suggestions: ["Tell me more", "How does this work?", "Show other options"],
+                            timestamp: new Date()
+                        };
+                        
+                        setMessages(prev => [...prev, aiResponse]);
+                    } catch (error) {
+                        console.error('Message processing error:', error);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+
+                const togglePlatform = () => {
+                    setPlatform(p => p === 'ios' ? 'android' : 'ios');
+                };
+
+                return h(PlatformContext.Provider, { value: platform },
+                    h('div', { className: 'app-container' }, [
+                        h('div', { className: 'platform-toggle' },
+                            h('button', {
+                                onClick: togglePlatform,
+                                className: 'platform-toggle-btn'
+                            }, platform === 'ios' ? 'Switch to Android' : 'Switch to iOS')
+                        ),
+                        h(MobileApp, {
+                            activePanel,
+                            setActivePanel,
+                            messages,
+                            inputText,
+                            setInputText,
+                            sendMessage,
+                            loading,
+                            messagesEndRef,
+                            showFileUpload,
+                            setShowFileUpload
+                        })
+                    ])
+                );
+            }
+
+            function FileUploadModal({ uploadType = 'file', closeModal }) {
+                const platform = useContext(PlatformContext);
+                const [dragActive, setDragActive] = useState(false);
+                const [capturedImage, setCapturedImage] = useState(null);
+                const fileInputRef = useRef(null);
+                const videoRef = useRef(null);
+                const [cameraStream, setCameraStream] = useState(null);
+                const [cameraError, setCameraError] = useState(null);
+
+                useEffect(() => {
+                    if (uploadType === 'camera') {
+                        initCamera();
+                    }
+                    return () => {
+                        if (cameraStream) {
+                            cameraStream.getTracks().forEach(track => track.stop());
+                        }
+                    };
+                }, [uploadType]);
+
+                const initCamera = async () => {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: 'environment' }
+                        });
+                        setCameraStream(stream);
+                        if (videoRef.current) {
+                            videoRef.current.srcObject = stream;
+                        }
+                    } catch (err) {
+                        console.error('Error accessing camera:', err);
+                        setCameraError('Could not access camera. Please check permissions.');
+                    }
+                };
+
+                const handleCameraCapture = () => {
+                    if (!videoRef.current) return;
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = videoRef.current.videoWidth;
+                    canvas.height = videoRef.current.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(videoRef.current, 0, 0);
+                    
+                    const imageDataUrl = canvas.toDataURL('image/jpeg');
+                    setCapturedImage(imageDataUrl);
+                    
+                    if (cameraStream) {
+                        cameraStream.getTracks().forEach(track => track.stop());
+                        setCameraStream(null);
+                    }
+                };
+
+                return h('div', { className: `file-upload-modal ${platform}` }, [
+                    h('div', { className: 'modal-overlay', onClick: closeModal }),
+                    h('div', { className: 'modal-content' }, [
+                        h('div', { className: 'modal-header' }, [
+                            h('h2', null, uploadType === 'camera' ? 'Take a Photo' : 'Upload Image'),
+                            h('button', { className: 'close-modal', onClick: closeModal },
+                                h(X, { size: 20 })
+                            )
+                        ]),
+                        h('div', { className: 'modal-body' },
+                            uploadType === 'camera' ? (
+                                h('div', { className: 'camera-container' },
+                                    cameraError ? h('div', { className: 'camera-error' },
+                                        h('p', null, cameraError)
+                                    ) : capturedImage ? h('div', { className: 'captured-image-container' },
+                                        h('img', {
+                                            src: capturedImage,
+                                            alt: 'Captured',
+                                            className: 'captured-image'
+                                        })
+                                    ) : h('video', {
+                                        ref: videoRef,
+                                        autoPlay: true,
+                                        playsInline: true,
+                                        className: 'camera-preview'
+                                    })
+                                )
+                            ) : h('div', { className: 'upload-area' },
+                                h('p', null, 'Click to upload or drag & drop')
+                            )
+                        ),
+                        h('div', { className: 'modal-footer' }, [
+                            h('button', { className: 'cancel-btn', onClick: closeModal },
+                                'Cancel'
+                            ),
+                            uploadType === 'camera' && !cameraError ? (
+                                capturedImage ? [
+                                    h('button', {
+                                        className: 'retake-btn',
+                                        onClick: () => {
+                                            setCapturedImage(null);
+                                            initCamera();
+                                        },
+                                        key: 'retake'
+                                    }, 'Retake'),
+                                    h('button', {
+                                        className: 'upload-btn',
+                                        key: 'use'
+                                    }, 'Use Photo')
+                                ] : h('button', {
+                                    className: 'capture-btn',
+                                    onClick: handleCameraCapture
+                                }, 'Capture')
+                            ) : h('button', { className: 'upload-btn' },
+                                'Upload'
+                            )
+                        ])
+                    ])
+                ]);
+            }
+
+            // Make App available globally
+            global.App = App;
+
+        })(window);
+    </script>
+
+    <!-- Initialize the app -->
+    <script>
+        const rootElement = document.getElementById('root');
+        const root = ReactDOM.createRoot(rootElement);
+        root.render(React.createElement(App));
+    </script>
+</body>
+</html>

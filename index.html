@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCT UI - LM Studio Chat</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Notes Panel -->
+    <div class="notes-panel" id="notes-panel">
+        <div class="notes-header">
+            <h2>Notes</h2>
+            <button class="close-notes" id="close-notes">×</button>
+        </div>
+        
+        <div class="notes-search">
+            <div class="search-input-wrapper">
+                <input type="text" id="notes-search-input" placeholder="Search notes...">
+                <button id="notes-clear-search" class="icon-button">×</button>
+            </div>
+        </div>
+        
+        <div class="notes-list" id="notes-list">
+            <!-- Notes will be listed here -->
+        </div>
+        
+        <button id="new-note-btn" class="action-button primary">+ New Note</button>
+        
+        <div class="notes-tags-section">
+            <h3>Tags</h3>
+            <div class="tags-list" id="tags-filter-list">
+                <!-- Tags will be listed here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Note Editor Panel -->
+    <div class="note-editor-panel" id="note-editor-panel">
+        <div class="note-editor-header">
+            <button class="back-to-notes" id="back-to-notes">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="note-editor-actions">
+                <div class="view-toggle-group">
+                    <button id="edit-view-btn" class="view-toggle active" title="Edit View">Edit</button>
+                    <button id="split-view-btn" class="view-toggle" title="Split View">Split</button>
+                    <button id="preview-view-btn" class="view-toggle" title="Preview">Preview</button>
+                </div>
+                <button id="enhance-note-btn" class="action-button primary">✨ Enhance</button>
+                <button id="save-note-btn" class="action-button primary">💾 Save</button>
+                <button id="delete-note-btn" class="action-button danger">🗑️ Delete</button>
+            </div>
+        </div>
+        
+        <div class="note-editor">
+            <input type="text" id="note-title-input" placeholder="Note Title">
+            
+            <div class="tags-container">
+                <div class="tags-input-container">
+                    <input type="text" id="tag-input" placeholder="Add tags...">
+                    <button id="add-tag-btn" class="tag-button">+</button>
+                </div>
+                <div class="tags-list" id="note-tags-list">
+                    <!-- Note tags will be listed here -->
+                </div>
+            </div>
+            
+            <div class="markdown-toolbar">
+                <button class="md-tool-btn" data-action="bold" title="Bold">B</button>
+                <button class="md-tool-btn" data-action="italic" title="Italic">I</button>
+                <button class="md-tool-btn" data-action="heading" title="Heading">H</button>
+                <span class="md-tool-separator"></span>
+                <button class="md-tool-btn" data-action="link" title="Link">🔗</button>
+                <button class="md-tool-btn" data-action="image" title="Image">🖼️</button>
+                <button class="md-tool-btn" data-action="code" title="Code">{'</>'}</button>
+                <span class="md-tool-separator"></span>
+                <button class="md-tool-btn" data-action="list" title="List">•</button>
+                <button class="md-tool-btn" data-action="numbered-list" title="Numbered List">1.</button>
+                <span class="md-tool-separator"></span>
+                <button class="md-tool-btn ai-tools-toggle" title="AI Assist Tools">✨</button>
+            </div>
+            
+            <div class="ai-tools-panel" id="ai-tools-panel">
+                <h3>AI Assist Tools</h3>
+                <div class="ai-suggestion-buttons">
+                    <button class="ai-suggestion-btn" data-action="summarize">📝 Summarize</button>
+                    <button class="ai-suggestion-btn" data-action="improve">✨ Improve Writing</button>
+                    <button class="ai-suggestion-btn" data-action="continue">➡️ Continue Writing</button>
+                    <button class="ai-suggestion-btn" data-action="translate">🌎 Translate</button>
+                </div>
+                <div class="ai-custom-prompt">
+                    <input type="text" id="ai-prompt-input" placeholder="Ask AI anything...">
+                    <button id="ai-prompt-btn">Ask</button>
+                </div>
+                <div class="ai-response-area">
+                    <div class="ai-thinking hidden" id="ai-thinking">
+                        <div class="ai-thinking-animation">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <p>AI is thinking...</p>
+                    </div>
+                    <div id="ai-response" class="hidden">
+                        <!-- AI responses will appear here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="editor-container">
+                <div class="markdown-editor-pane">
+                    <textarea id="note-content-input" placeholder="Note Content (Markdown supported)"></textarea>
+                </div>
+                
+                <div class="markdown-preview-pane" id="note-content-display">
+                    <!-- Rendered Markdown will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settings-panel">
+        <div class="settings-header">
+            <h2>Settings</h2>
+            <button class="close-settings" id="close-settings">×</button>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Response Style</h3>
+            <div class="radio-option">
+                <input type="radio" id="style-professional" name="response-style" value="professional">
+                <label for="style-professional">Professional</label>
+            </div>
+            <div class="radio-option">
+                <input type="radio" id="style-concise" name="response-style" value="concise">
+                <label for="style-concise">Concise</label>
+            </div>
+            <div class="radio-option">
+                <input type="radio" id="style-normal" name="response-style" value="normal" checked>
+                <label for="style-normal">Normal</label>
+            </div>
+            <div class="radio-option">
+                <input type="radio" id="style-creative" name="response-style" value="creative">
+                <label for="style-creative">Creative</label>
+            </div>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Features</h3>
+            <div class="checkbox-option">
+                <input type="checkbox" id="smart-suggestions" checked>
+                <label for="smart-suggestions">Show Smart Suggestions</label>
+            </div>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Active Model</h3>
+            <div class="model-display">llama-3.2-3b-instruct</div>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Conversation History</h3>
+            <button class="action-button danger" id="clear-history">Clear Conversation History</button>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Admin</h3>
+            <button class="action-button neutral" id="admin-panel">Go to Admin Panel</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="header-top">
+                    <button class="add-btn">+</button>
+                </div>
+            </div>
+            <div class="sidebar-nav">
+                <div class="nav-item active" id="chat-nav">
+                    <i class="fas fa-comment"></i>
+                </div>
+                <div class="nav-item" id="notes-nav">
+                    <i class="fas fa-sticky-note"></i>
+                </div>
+                <div class="nav-item" id="settings-nav">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div class="nav-item">
+                    <i class="fas fa-chart-simple"></i>
+                </div>
+            </div>
+            <div class="sidebar-avatar">
+                <div class="avatar">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+            </div>
+        </div>
+        <div class="main">
+            <div class="main-header">
+                <div class="logo">
+                    <h2>GCT UI</h2>
+                    <p>Green Chip Technology</p>
+                </div>
+            </div>
+            <div class="chat-container">
+                <div class="messages" id="messages">
+                    <!-- Messages will be added here dynamically -->
+                </div>
+                <div class="input-area">
+                    <div class="input-container">
+                        <button class="attachment-btn">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        <input type="text" id="message-input" placeholder="Type your message...">
+                        <button id="send-btn" class="send-btn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Image Upload Modal -->
+    <div class="image-upload-modal" id="image-upload-modal">
+        <div class="image-upload-content">
+            <div class="image-upload-header">
+                <h2>Upload Image</h2>
+                <button class="close-modal" id="close-image-upload">×</button>
+            </div>
+            <div class="image-upload-body">
+                <div class="upload-area" id="upload-area">
+                    <p>Drag & drop an image or click to browse</p>
+                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                </div>
+            </div>
+            <div class="image-upload-footer">
+                <button class="cancel-btn" id="cancel-upload">Cancel</button>
+                <button class="upload-btn" id="confirm-upload">Upload</button>
+            </div>
+        </div>
+    </div>
+    <!-- Markdown libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
+    
+    <!-- Configuration -->
+    <script src="config.js"></script>
+    
+    <!-- App scripts -->
+    <script src="script.js"></script>
+    <script src="notes.js"></script>
+</body>
+</html>

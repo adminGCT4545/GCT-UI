@@ -1,0 +1,15 @@
+version: '3'
+services:
+  gct-ui-vlm:
+    build: .
+    ports:
+      - "9091:9091"
+    restart: unless-stopped
+    environment:
+      - API_URL=http://192.168.1.7:4545/v1/chat/completions
+    # Optional volume mounts for development
+    # volumes:
+    #   - ./index.html:/usr/share/nginx/html/index.html
+    #   - ./script.js:/usr/share/nginx/html/script.js
+    #   - ./notes.js:/usr/share/nginx/html/notes.js
+    #   - ./styles.css:/usr/share/nginx/html/styles.css
